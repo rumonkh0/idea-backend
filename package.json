@@ -1,0 +1,20 @@
+{
+  "name": "idea_backend",
+  "version": "1.0.0",
+  "description": "Backend server for idea website",
+  "homepage": "https://github.com/rumonkh0/idea-backend#readme",
+  "bugs": {
+    "url": "https://github.com/rumonkh0/idea-backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rumonkh0/idea-backend.git"
+  },
+  "license": "MIT",
+  "author": "Rumon",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
