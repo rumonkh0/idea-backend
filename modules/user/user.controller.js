@@ -8,25 +8,43 @@ export const createUser = asyncHandler(async (req, res) => {
 
 export const getUsers = asyncHandler(async (req, res) => {
   const users = await userService.getUsers();
-  res.json(users);
+  res.status(200).json({
+    success: true,
+    data: users,
+  });
 });
 
 export const getUserById = asyncHandler(async (req, res) => {
-  const user = await userService.getUserById(req.params.id);
-  res.json(user);
+  const userId = Number(req.params.id);
+  const user = await userService.getUserById(userId);
+  res.status(200).json({
+    success: true,
+    data: user,
+  });
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
-  const user = await userService.updateUser(req.params.id, req.body);
-  res.json(user);
+  const userId = Number(req.params.id);
+  const user = await userService.updateUser(userId, req.body);
+  res.status(200).json({
+    success: true,
+    data: user,
+  });
 });
 
 export const deleteUser = asyncHandler(async (req, res) => {
-  await userService.deleteUser(req.params.id);
-  res.status(204).send();
+  const userId = Number(req.params.id);
+  await userService.deleteUser(userId);
+  res.status(204).json({
+    success: true,
+    message: "User deleted successfully",
+  });
 });
 
 export const getUserByEmail = asyncHandler(async (req, res) => {
   const user = await userService.getUserByEmail(req.params.email);
-  res.json(user);
+  res.status(200).json({
+    success: true,
+    data: user,
+  });
 });
