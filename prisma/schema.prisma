@@ -19,7 +19,11 @@ model User {
   email         String       @unique
   phone         String?
   passwordHash  String
-  role          UserRole
+  role          UserRole     @default(STUDENT)
+  isEmailConfirmed       Boolean  @default(false)
+  confirmEmailToken      String?
+  resetPasswordToken     String?
+  resetPasswordExpire    DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -131,6 +135,7 @@ enum UserRole {
   STUDENT
   INSTRUCTOR
   ADMIN
+  SUPERADMIN
 }
 
 enum CourseStatus {

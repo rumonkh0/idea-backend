@@ -18,7 +18,7 @@ dotenv.config({ path: "./config/config.env" });
 connectDB();
 
 // Route files
-// import auth from "./routes/auth.js";
+import auth from "./modules/auth/auth.route.js";
 import users from "./modules/user/user.route.js";
 
 // Initialize app
@@ -57,6 +57,7 @@ app.use(cors());
 app.use(express.static("public"));
 
 // Mount routers
+app.use("/api/v1/auth", auth);
 app.use("/api/v1/users", users);
 app.get("/api/v1", async (req, res) => {
   //   res.send("Welcome to Idea learning!");
