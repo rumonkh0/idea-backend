@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            Int          @id @default(autoincrement())
+  name          String
+  email         String       @unique
+  phone         String?
+  passwordHash  String
+  role          UserRole
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // relations
+  courses       Course[]     @relation("InstructorCourses")
+  enrollments   Enrollment[]
+  reviews       Review[]
+  payments      Payment[]
+}
+
+model Course {
+  id            Int          @id @default(autoincrement())
+  title         String
+  description   String
+  thumbnail     String?
+  duration      Int?
+  level         CourseLevel
+  language      String
+  price         Decimal      @db.Decimal(10, 2)
+  rating        Decimal?     @db.Decimal(3, 2)
+  status        CourseStatus
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // relations
+  instructorId  Int
+  instructor    User         @relation("InstructorCourses", fields: [instructorId], references: [id])
+
+  modules       Module[]
+  enrollments   Enrollment[]
+  reviews       Review[]
+  payments      Payment[]
+}
+
+model Module {
+  id        Int       @id @default(autoincrement())
+  title     String
+  sortOrder Int
+  createdAt DateTime  @default(now())
+
+  // relations
+  courseId  Int
+  course    Course    @relation(fields: [courseId], references: [id])
+  lessons   Lesson[]
+}
+
+model Lesson {
+  id        Int       @id @default(autoincrement())
+  title     String
+  videoUrl  String
+  duration  Int?
+  sortOrder Int
+  isPreview Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  // relations
+  moduleId  Int
+  module    Module    @relation(fields: [moduleId], references: [id])
+}
+
+model Enrollment {
+  id         Int              @id @default(autoincrement())
+  status     EnrollmentStatus
+  enrolledAt DateTime         @default(now())
+
+  // relations
+  userId     Int
+  courseId   Int
+  user       User             @relation(fields: [userId], references: [id])
+  course     Course           @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+model Review {
+  id        Int       @id @default(autoincrement())
+  rating    Int
+  comment   String?
+  createdAt DateTime  @default(now())
+
+  // relations
+  userId    Int
+  courseId  Int
+  user      User      @relation(fields: [userId], references: [id])
+  course    Course    @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String
+  paymentMethod String
+  transactionId String        @unique
+  status        PaymentStatus
+  createdAt     DateTime      @default(now())
+
+  // relations
+  userId        Int
+  courseId      Int
+  user          User          @relation(fields: [userId], references: [id])
+  course        Course        @relation(fields: [courseId], references: [id])
+}
+
+/* ================= ENUMS ================= */
+
+enum UserRole {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}

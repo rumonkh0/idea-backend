@@ -1,0 +1,70 @@
+import express from "express";
+import dotenv from "dotenv";
+import colors from "colors";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
+import helmet from "helmet";
+import xss from "xss-clean";
+import rateLimit from "express-rate-limit";
+import hpp from "hpp";
+import cors from "cors";
+import errorHandler from "./middleware/error.js";
+import { pool, connectDB } from "./config/db.js";
+
+// Load env vars
+dotenv.config({ path: "./config/config.env" });
+
+// Connect to database
+connectDB();
+
+// Route files
+// import auth from "./routes/auth.js";
+import users from "./modules/user/user.route.js";
+
+// Initialize app
+const app = express();
+
+// Body parser
+app.use(express.json());
+
+// Cookie parser
+app.use(cookieParser());
+
+// Dev logging middleware
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+// Set security headers
+app.use(helmet());
+
+// Prevent XSS attacks
+//   app.use(xss());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 mins
+  max: 100,
+});
+app.use(limiter);
+
+// Prevent http param pollution
+app.use(hpp());
+
+// Enable CORS
+app.use(cors());
+
+// Set static folder
+app.use(express.static("public"));
+
+// Mount routers
+app.use("/api/v1/users", users);
+app.get("/api/v1", async (req, res) => {
+  //   res.send("Welcome to Idea learning!");
+  const result = await pool.query("SELECT NOW()");
+  res.json(result.rows[0]);
+});
+
+// Error handler middleware
+app.use(errorHandler);
+
+export default app;
