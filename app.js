@@ -20,6 +20,7 @@ connectDB();
 // Route files
 import auth from "./modules/auth/auth.route.js";
 import users from "./modules/user/user.route.js";
+import courses from "./modules/course/course.route.js";
 
 // Initialize app
 const app = express();
@@ -59,6 +60,7 @@ app.use(express.static("public"));
 // Mount routers
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/users", users);
+app.use("/api/v1/courses", courses);
 app.get("/api/v1", async (req, res) => {
   //   res.send("Welcome to Idea learning!");
   const result = await pool.query("SELECT NOW()");

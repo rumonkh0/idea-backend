@@ -32,6 +32,7 @@ model User {
   enrollments   Enrollment[]
   reviews       Review[]
   payments      Payment[]
+  lessonProgress LessonProgress[]  
 }
 
 model Course {
@@ -49,8 +50,8 @@ model Course {
   updatedAt     DateTime     @updatedAt
 
   // relations
-  instructorId  Int
-  instructor    User         @relation("InstructorCourses", fields: [instructorId], references: [id])
+  instructorId  Int?
+  instructor    User?         @relation("InstructorCourses", fields: [instructorId], references: [id])
 
   modules       Module[]
   enrollments   Enrollment[]
@@ -82,6 +83,7 @@ model Lesson {
   // relations
   moduleId  Int
   module    Module    @relation(fields: [moduleId], references: [id])
+  progress  LessonProgress[] 
 }
 
 model Enrollment {
@@ -97,6 +99,21 @@ model Enrollment {
 
   @@unique([userId, courseId])
 }
+
+model LessonProgress {
+  id          Int      @id @default(autoincrement())
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+
+  userId      Int
+  lessonId    Int
+
+  user        User    @relation(fields: [userId], references: [id])
+  lesson      Lesson  @relation(fields: [lessonId], references: [id])
+
+  @@unique([userId, lessonId])
+}
+
 
 model Review {
   id        Int       @id @default(autoincrement())

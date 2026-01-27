@@ -1,5 +1,6 @@
-import asyncHandler from '../../middleware/async.js';
-import sendEmail from '../../utils/sendEmail.js';
+import asyncHandler from "../../middleware/async.js";
+import jwt from "jsonwebtoken";
+import sendEmail from "../../utils/sendEmail.js";
 import {
   registerUser,
   loginUser,
@@ -8,21 +9,21 @@ import {
   confirmEmailService,
   updateDetailsService,
   updatePasswordService,
-} from './auth.service.js';
+} from "./auth.service.js";
 
 // Cookie + response helper
 const sendTokenResponse = (token, statusCode, res) => {
   const options = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000,
     ),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === "production",
   };
 
   res
     .status(statusCode)
-    .cookie('token', token, options)
+    .cookie("token", token, options)
     .json({ success: true, token });
 };
 
@@ -31,19 +32,19 @@ export const register = asyncHandler(async (req, res) => {
   const { user, confirmToken } = await registerUser(req.body);
 
   const confirmURL = `${req.protocol}://${req.get(
-    'host'
+    "host",
   )}/api/v1/auth/confirmemail?token=${confirmToken}`;
 
   await sendEmail({
     email: user.email,
-    subject: 'Confirm your email',
+    subject: "Confirm your email",
     message: `Please confirm your email: \n\n${confirmURL}`,
   });
 
   sendTokenResponse(
-    require('jsonwebtoken').sign({ id: user.id }, process.env.JWT_SECRET),
+    jwt.sign({ id: user.id }, process.env.JWT_SECRET),
     200,
-    res
+    res,
   );
 });
 
@@ -64,7 +65,7 @@ export const updatePassword = asyncHandler(async (req, res) => {
   const token = await updatePasswordService(
     req.user.id,
     req.body.currentPassword,
-    req.body.newPassword
+    req.body.newPassword,
   );
   sendTokenResponse(token, 200, res);
 });
@@ -74,24 +75,21 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const { user, resetToken } = await forgotPasswordService(req.body.email);
 
   const resetURL = `${req.protocol}://${req.get(
-    'host'
+    "host",
   )}/api/v1/auth/resetpassword/${resetToken}`;
 
   await sendEmail({
     email: user.email,
-    subject: 'Password reset',
+    subject: "Password reset",
     message: `Reset your password: \n\n${resetURL}`,
   });
 
-  res.status(200).json({ success: true, data: 'Email sent' });
+  res.status(200).json({ success: true, data: "Email sent" });
 });
 
 // @route PUT /api/v1/auth/resetpassword/:token
 export const resetPassword = asyncHandler(async (req, res) => {
-  const token = await resetPasswordService(
-    req.params.token,
-    req.body.password
-  );
+  const token = await resetPasswordService(req.params.token, req.body.password);
 
   sendTokenResponse(token, 200, res);
 });
