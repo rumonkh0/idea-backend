@@ -1,3 +1,4 @@
+import asyncHandler from "../../middleware/async.js";
 import {
   createCourse,
   updateCourse,
@@ -14,114 +15,71 @@ import {
 } from "./course.service.js";
 
 // COURSE
-export const addCourse = async (req, res, next) => {
-  try {
-    const course = await createCourse(req.body);
-    res.status(201).json(course);
-  } catch (err) {
-    next(err);
-  }
-};
+export const addCourse = asyncHandler(async (req, res, next) => {
+  const course = await createCourse(req.body);
+  res.status(201).json(course);
+});
 
-export const editCourse = async (req, res, next) => {
-  try {
-    const course = await updateCourse(Number(req.params.id), req.body);
-    res.json(course);
-  } catch (err) {
-    next(err);
-  }
-};
+export const editCourse = asyncHandler(async (req, res, next) => {
+  const course = await updateCourse(Number(req.params.id), req.body);
+  res.json(course);
+});
 
-export const removeCourse = async (req, res, next) => {
-  try {
-    await deleteCourse(Number(req.params.id));
-    res.status(204).end();
-  } catch (err) {
-    next(err);
-  }
-};
+export const removeCourse = asyncHandler(async (req, res, next) => {
+  await deleteCourse(Number(req.params.id));
+  res.status(204).end();
+});
 
-export const getCourse = async (req, res, next) => {
-  try {
-    const course = await getCourseWithModulesAndLessons(Number(req.params.id));
-    res.json(course);
-  } catch (err) {
-    next(err);
-  }
-};
+export const getCourse = asyncHandler(async (req, res, next) => {
+  const course = await getCourseWithModulesAndLessons(Number(req.params.id));
+  res.json(course);
+});
 
-export const getCourses = async (req, res, next) => {
-  try {
-    const courses = await getAllCourses();
-    res.json(courses);
-  } catch (err) {
-    next(err);
-  }
-};
+export const getCourses = asyncHandler(async (req, res, next) => {
+  const courses = await getAllCourses();
+  res.json(courses);
+});
+
+export const getCoursesofUser = asyncHandler(async (req, res, next) => {
+  const courses = await getAllCourses();
+  res.json(courses);
+});
 
 // MODULE
-export const addModule = async (req, res, next) => {
-  try {
-    const module = await createModule(Number(req.params.courseId), req.body);
-    res.status(201).json(module);
-  } catch (err) {
-    next(err);
-  }
-};
+export const addModule = asyncHandler(async (req, res, next) => {
+  const module = await createModule(Number(req.params.courseId), req.body);
+  res.status(201).json(module);
+});
 
-export const editModule = async (req, res, next) => {
-  try {
-    const module = await updateModule(Number(req.params.id), req.body);
-    res.json(module);
-  } catch (err) {
-    next(err);
-  }
-};
+export const editModule = asyncHandler(async (req, res, next) => {
+  const module = await updateModule(Number(req.params.id), req.body);
+  res.json(module);
+});
 
-export const removeModule = async (req, res, next) => {
-  try {
-    await deleteModule(Number(req.params.id));
-    res.status(204).end();
-  } catch (err) {
-    next(err);
-  }
-};
+export const removeModule = asyncHandler(async (req, res, next) => {
+  await deleteModule(Number(req.params.id));
+  res.status(204).end();
+});
 
 // LESSON
-export const addLesson = async (req, res, next) => {
-  try {
-    const lesson = await createLesson(Number(req.params.moduleId), req.body);
-    res.status(201).json(lesson);
-  } catch (err) {
-    next(err);
-  }
-};
+export const addLesson = asyncHandler(async (req, res, next) => {
+  const lesson = await createLesson(Number(req.params.moduleId), req.body);
+  res.status(201).json(lesson);
+});
 
-export const editLesson = async (req, res, next) => {
-  try {
-    const lesson = await updateLesson(Number(req.params.id), req.body);
-    res.json(lesson);
-  } catch (err) {
-    next(err);
-  }
-};
+export const editLesson = asyncHandler(async (req, res, next) => {
+  const lesson = await updateLesson(Number(req.params.id), req.body);
+  res.json(lesson);
+});
 
-export const removeLesson = async (req, res, next) => {
-  try {
-    await deleteLesson(Number(req.params.id));
-    res.status(204).end();
-  } catch (err) {
-    next(err);
-  }
-};
+export const removeLesson = asyncHandler(async (req, res, next) => {
+  await deleteLesson(Number(req.params.id));
+  res.status(204).end();
+});
 
 // LESSON PROGRESS
-export const completeLessonController = async (req, res, next) => {
-  try {
-    const { userId, lessonId } = req.body;
-    const progress = await completeLesson(Number(userId), Number(lessonId));
-    res.json(progress);
-  } catch (err) {
-    next(err);
-  }
-};
+export const completeLessonController = asyncHandler(async (req, res, next) => {
+  const { userId, lessonId } = req.body;
+  const progress = await completeLesson(Number(userId), Number(lessonId));
+  res.json(progress);
+});

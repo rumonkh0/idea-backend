@@ -12,6 +12,7 @@ import {
   editLesson,
   removeLesson,
   completeLessonController,
+  getCoursesofUser,
 } from "./course.controller.js";
 
 const router = express.Router();
@@ -22,7 +23,7 @@ router.put("/:id", editCourse);
 router.delete("/:id", removeCourse);
 router.get("/:id", getCourse);
 router.get("/", getCourses);
-router.get("/user/:userId/", getCourses);
+router.get("/user/:userId/", getCoursesofUser);  //to do
 
 // Module routes
 router.post("/:courseId/module", addModule);

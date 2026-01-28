@@ -64,7 +64,7 @@ app.use("/api/v1/courses", courses);
 app.get("/api/v1", async (req, res) => {
   //   res.send("Welcome to Idea learning!");
   const result = await pool.query("SELECT NOW()");
-  res.json(result.rows[0]);
+  res.json({ message: "Welcome to Idea learning!", Time: result.rows[0].now });
 });
 
 // Error handler middleware
