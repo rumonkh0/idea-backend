@@ -35,11 +35,15 @@ export const register = asyncHandler(async (req, res) => {
     "host",
   )}/api/v1/auth/confirmemail?token=${confirmToken}`;
 
-  await sendEmail({
-    email: user.email,
-    subject: "Confirm your email",
-    message: `Please confirm your email: \n\n${confirmURL}`,
-  });
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Confirm your email",
+      message: `Please confirm your email: \n\n${confirmURL}`,
+    });
+  } catch (error) {
+    console.error("Email sending failed:", error);
+  }
 
   sendTokenResponse(
     jwt.sign({ id: user.id }, process.env.JWT_SECRET),
