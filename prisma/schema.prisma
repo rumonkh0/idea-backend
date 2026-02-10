@@ -146,6 +146,16 @@ model Payment {
   course        Course        @relation(fields: [courseId], references: [id])
 }
 
+model BkashTransaction {
+  id           Int         @id @default(autoincrement())
+  txid         String      @unique
+  amount       Decimal     @db.Decimal(10, 2)
+  rawMessage   String
+  senderNumber String?
+  status       BkashStatus @default(UNMATCHED)
+  createdAt    DateTime    @default(now())
+}
+
 /* ================= ENUMS ================= */
 
 enum UserRole {
@@ -176,4 +186,9 @@ enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+enum BkashStatus {
+  UNMATCHED
+  MATCHED
 }

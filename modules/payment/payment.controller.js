@@ -1,6 +1,14 @@
 import asyncHandler from "../../middleware/async.js";
 import prisma from "../../config/prisma.js";
 import ErrorResponse from "../../utils/errorResponse.js";
+import {
+  createPayment,
+  findPaymentByTxId,
+  findAllPayments,
+  updatePaymentStatusById,
+  findPaymentsByUser,
+} from "./payment.service.js";
+import { findBkashByTxid, markBkashMatched } from "./bkash.service.js";
 
 // User requests a payment (status: PENDING)
 export const requestPayment = asyncHandler(async (req, res, next) => {
@@ -14,20 +22,25 @@ export const requestPayment = asyncHandler(async (req, res, next) => {
   });
   if (!course) return next(new ErrorResponse("Course not found", 404));
   // Check for duplicate txid
-  const exists = await prisma.payment.findUnique({ where: { transactionId } });
+  const exists = await findPaymentByTxId(transactionId);
   if (exists)
     return next(new ErrorResponse("Transaction ID already used", 400));
-  const payment = await prisma.payment.create({
-    data: {
-      userId: req.user.id,
-      courseId: Number(courseId),
-      transactionId,
-      amount,
-      currency,
-      paymentMethod,
-      status: "PENDING",
-    },
+  const payment = await createPayment(req.user.id, {
+    courseId,
+    transactionId,
+    amount,
+    currency,
+    paymentMethod,
   });
+
+  // Immediately check if a bKash transaction with same txid already exists
+  const bkashTx = await findBkashByTxid(transactionId);
+  if (bkashTx && Number(bkashTx.amount) === Number(amount)) {
+    await updatePaymentStatusById(payment.id, "SUCCESS");
+    await markBkashMatched(transactionId);
+    const updated = await updatePaymentStatusById(payment.id, "SUCCESS");
+    return res.status(201).json(updated);
+  }
   res.status(201).json(payment);
 });
 
@@ -44,14 +57,7 @@ export const getAllPayments = asyncHandler(async (req, res, next) => {
   if (status) where.status = status;
   if (userId) where.userId = Number(userId);
   if (courseId) where.courseId = Number(courseId);
-  const payments = await prisma.payment.findMany({
-    where,
-    orderBy: { [sortBy]: order },
-    include: {
-      user: { select: { id: true, name: true, email: true } },
-      course: { select: { id: true, title: true } },
-    },
-  });
+  const payments = await findAllPayments(where, sortBy, order);
   res.json(payments);
 });
 
@@ -63,21 +69,12 @@ export const updatePaymentStatus = asyncHandler(async (req, res, next) => {
   if (!validStatuses.includes(status)) {
     return next(new ErrorResponse("Invalid status", 400));
   }
-  const payment = await prisma.payment.update({
-    where: { id: Number(id) },
-    data: { status },
-  });
+  const payment = await updatePaymentStatusById(id, status);
   res.json(payment);
 });
 
 // User: view own payment history
 export const getUserPayments = asyncHandler(async (req, res, next) => {
-  const payments = await prisma.payment.findMany({
-    where: { userId: req.user.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      course: { select: { id: true, title: true } },
-    },
-  });
+  const payments = await findPaymentsByUser(req.user.id);
   res.json(payments);
 });

@@ -21,6 +21,8 @@ connectDB();
 import auth from "./modules/auth/auth.route.js";
 import users from "./modules/user/user.route.js";
 import courses from "./modules/course/course.route.js";
+import bkash from "./modules/payment/bkash.route.js";
+import payments from "./modules/payment/payment.route.js";
 
 // Initialize app
 const app = express();
@@ -61,6 +63,10 @@ app.use(express.static("public"));
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/users", users);
 app.use("/api/v1/courses", courses);
+// bKash webhook (public)
+app.use("/api/bkash", bkash);
+// Payment routes
+app.use("/api/v1/payments", payments);
 app.get("/api/v1", async (req, res) => {
   //   res.send("Welcome to Idea learning!");
   const result = await pool.query("SELECT NOW()");

@@ -45,3 +45,13 @@ export const findPaymentsByUser = async (userId) => {
     },
   });
 };
+
+export const findPendingPaymentByTxidAndAmount = async (txid, amount) => {
+  return prisma.payment.findFirst({
+    where: {
+      transactionId: txid,
+      amount: Number(amount),
+      status: "PENDING",
+    },
+  });
+};
