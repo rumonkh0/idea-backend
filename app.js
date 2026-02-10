@@ -64,7 +64,7 @@ app.use("/api/v1/auth", auth);
 app.use("/api/v1/users", users);
 app.use("/api/v1/courses", courses);
 // bKash webhook (public)
-app.use("/api/bkash", bkash);
+app.use("/api/v1/bkash", bkash);
 // Payment routes
 app.use("/api/v1/payments", payments);
 app.get("/api/v1", async (req, res) => {
