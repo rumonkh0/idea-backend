@@ -30,10 +30,33 @@ export const findAllPayments = async (filter, sortBy, order) => {
 };
 
 export const updatePaymentStatusById = async (id, status) => {
-  return prisma.payment.update({
+  // Get the payment record to retrieve userId and courseId
+  const payment = await prisma.payment.findUnique({
+    where: { id: Number(id) },
+  });
+
+  if (!payment) {
+    throw new Error("Payment not found");
+  }
+
+  // Update payment status
+  const updatedPayment = await prisma.payment.update({
     where: { id: Number(id) },
     data: { status },
   });
+
+  // If status is SUCCESS, create enrollment record
+  if (status === "SUCCESS") {
+    await prisma.enrollment.create({
+      data: {
+        userId: payment.userId,
+        courseId: payment.courseId,
+        status: "ACTIVE",
+      },
+    });
+  }
+
+  return updatedPayment;
 };
 
 export const findPaymentsByUser = async (userId) => {
