@@ -4,6 +4,10 @@ import {
   createBkashTransaction,
   findBkashByTxid,
   markBkashMatched,
+  getAllBkashTransactions,
+  updateBkashTransaction,
+  deleteBkashTransaction,
+  findBkashById,
 } from "./bkash.service.js";
 import {
   findPendingPaymentByTxidAndAmount,
@@ -61,3 +65,63 @@ export const bkashWebhook = asyncHandler(async (req, res, next) => {
 
   res.status(201).json({ message: "Transaction stored", tx: existing });
 });
+
+// Admin: view all bkash transactions with filters
+export const getAllBkashTransactions_Handler = asyncHandler(
+  async (req, res, next) => {
+    const { status, txid, sortBy = "createdAt", order = "desc" } = req.query;
+    const where = {};
+    if (status) where.status = status;
+    if (txid) where.txid = txid;
+
+    const transactions = await getAllBkashTransactions(
+      where,
+      sortBy,
+      order
+    );
+    res.json(transactions);
+  }
+);
+
+// Admin: view single bkash transaction
+export const getBkashTransaction = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const transaction = await findBkashById(id);
+  if (!transaction) {
+    return next(new ErrorResponse("Transaction not found", 404));
+  }
+  res.json(transaction);
+});
+
+// Admin: update bkash transaction status or other fields
+export const updateBkashTransaction_Handler = asyncHandler(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const { status, senderNumber } = req.body;
+    const validStatuses = ["UNMATCHED", "MATCHED"];
+
+    const update = {};
+    if (status && validStatuses.includes(status)) update.status = status;
+    if (senderNumber !== undefined) update.senderNumber = senderNumber;
+
+    if (Object.keys(update).length === 0) {
+      return next(new ErrorResponse("No valid fields to update", 400));
+    }
+
+    const transaction = await updateBkashTransaction(id, update);
+    res.json(transaction);
+  }
+);
+
+// Admin: delete bkash transaction
+export const deleteBkashTransaction_Handler = asyncHandler(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const transaction = await findBkashById(id);
+    if (!transaction) {
+      return next(new ErrorResponse("Transaction not found", 404));
+    }
+    await deleteBkashTransaction(id);
+    res.json({ message: "Transaction deleted" });
+  }
+);

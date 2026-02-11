@@ -33,6 +33,8 @@ app.use(express.json());
 // Cookie parser
 app.use(cookieParser());
 
+console.log(`NODE_ENV: ${process.env.NODE_ENV}`.yellow.bold);
+
 // Dev logging middleware
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
