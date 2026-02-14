@@ -34,7 +34,11 @@ export const bkashWebhook = asyncHandler(async (req, res, next) => {
       rawMessage,
       senderNumber: senderMatch ? senderMatch[1] : null,
     });
-    return res.status(201).json({ message: "Stored unparsable message", tx });
+    return res.status(201).json({
+      success: true,
+      message: "Stored unparsable message",
+      data: tx,
+    });
   }
 
   const amount = parseFloat(amountMatch[1].replace(/,/g, ""));
@@ -58,12 +62,18 @@ export const bkashWebhook = asyncHandler(async (req, res, next) => {
     // Approve payment and mark tx matched
     await updatePaymentStatusById(payment.id, "SUCCESS");
     await markBkashMatched(txid);
-    return res
-      .status(200)
-      .json({ message: "Matched and approved payment", paymentId: payment.id });
+    return res.status(200).json({
+      success: true,
+      message: "Transaction matched and payment approved",
+      data: { transactionId: existing.id, paymentId: payment.id },
+    });
   }
 
-  res.status(201).json({ message: "Transaction stored", tx: existing });
+  res.status(201).json({
+    success: true,
+    message: "Transaction stored successfully",
+    data: existing,
+  });
 });
 
 // Admin: view all bkash transactions with filters
@@ -74,13 +84,14 @@ export const getAllBkashTransactions_Handler = asyncHandler(
     if (status) where.status = status;
     if (txid) where.txid = txid;
 
-    const transactions = await getAllBkashTransactions(
-      where,
-      sortBy,
-      order
-    );
-    res.json(transactions);
-  }
+    const transactions = await getAllBkashTransactions(where, sortBy, order);
+    res.status(200).json({
+      success: true,
+      message: "Bkash transactions retrieved successfully",
+      data: transactions,
+      count: transactions.length,
+    });
+  },
 );
 
 // Admin: view single bkash transaction
@@ -90,7 +101,11 @@ export const getBkashTransaction = asyncHandler(async (req, res, next) => {
   if (!transaction) {
     return next(new ErrorResponse("Transaction not found", 404));
   }
-  res.json(transaction);
+  res.status(200).json({
+    success: true,
+    message: "Bkash transaction retrieved successfully",
+    data: transaction,
+  });
 });
 
 // Admin: update bkash transaction status or other fields
@@ -109,8 +124,12 @@ export const updateBkashTransaction_Handler = asyncHandler(
     }
 
     const transaction = await updateBkashTransaction(id, update);
-    res.json(transaction);
-  }
+    res.status(200).json({
+      success: true,
+      message: "Bkash transaction updated successfully",
+      data: transaction,
+    });
+  },
 );
 
 // Admin: delete bkash transaction
@@ -122,6 +141,10 @@ export const deleteBkashTransaction_Handler = asyncHandler(
       return next(new ErrorResponse("Transaction not found", 404));
     }
     await deleteBkashTransaction(id);
-    res.json({ message: "Transaction deleted" });
-  }
+    res.status(200).json({
+      success: true,
+      message: "Bkash transaction deleted successfully",
+      data: null,
+    });
+  },
 );

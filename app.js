@@ -70,9 +70,48 @@ app.use("/api/v1/bkash", bkash);
 // Payment routes
 app.use("/api/v1/payments", payments);
 app.get("/api/v1", async (req, res) => {
-  //   res.send("Welcome to Idea learning!");
   const result = await pool.query("SELECT NOW()");
-  res.json({ message: "Welcome to Idea learning!", Time: result.rows[0].now });
+
+  const now = new Date(result.rows[0].now);
+
+  const readableTime = now.toLocaleString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZoneName: "short",
+  });
+
+  res.status(200).json({
+    success: true,
+    status: "active",
+    code: 200,
+    message: "✨ Welcome to Idea Learning — Empowering Intelligent Growth.",
+
+    platform: {
+      name: "Idea Learning",
+      api_version: "v1",
+      release: "stable",
+    },
+
+    server_time: {
+      iso: now.toISOString(),
+      readable: readableTime,
+    },
+
+    client: {
+      protocol: req.protocol,
+      secure: req.secure,
+    },
+
+    links: {
+      documentation:
+        "https://documenter.getpostman.com/view/51096995/2sBXcAKiMj",
+    },
+  });
 });
 
 // Error handler middleware

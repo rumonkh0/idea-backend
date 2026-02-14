@@ -73,7 +73,7 @@ export const updatePasswordService = asyncHandler(
       throw new ErrorResponse("User not found", 404);
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
 
     if (!isMatch) {
       throw new ErrorResponse("Password is incorrect", 401);
@@ -84,7 +84,7 @@ export const updatePasswordService = asyncHandler(
 
     await prisma.user.update({
       where: { id: userId },
-      data: { password: hashedPassword },
+      data: { passwordHash: hashedPassword },
     });
 
     return generateJwt(userId);
@@ -149,7 +149,7 @@ export const resetPasswordService = asyncHandler(async (token, newPassword) => {
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       resetPasswordToken: null,
       resetPasswordExpire: null,
     },

@@ -12,7 +12,12 @@ import {
 } from "./auth.service.js";
 
 // Cookie + response helper
-const sendTokenResponse = (token, statusCode, res) => {
+const sendTokenResponse = (
+  token,
+  statusCode,
+  res,
+  message = "Successfully authenticated",
+) => {
   const options = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000,
@@ -24,7 +29,7 @@ const sendTokenResponse = (token, statusCode, res) => {
   res
     .status(statusCode)
     .cookie("token", token, options)
-    .json({ success: true, token });
+    .json({ success: true, message, token });
 };
 
 // @route POST /api/v1/auth/register
@@ -47,21 +52,26 @@ export const register = asyncHandler(async (req, res) => {
 
   sendTokenResponse(
     jwt.sign({ id: user.id }, process.env.JWT_SECRET),
-    200,
+    201,
     res,
+    "User registered successfully",
   );
 });
 
 // @route POST /api/v1/auth/login
 export const login = asyncHandler(async (req, res) => {
   const { token } = await loginUser(req.body);
-  sendTokenResponse(token, 200, res);
+  sendTokenResponse(token, 200, res, "Login successful");
 });
 
 // @route PUT /api/v1/auth/updatedetails
 export const updateDetails = asyncHandler(async (req, res) => {
   const user = await updateDetailsService(req.user.id, req.body);
-  res.status(200).json({ success: true, data: user });
+  res.status(200).json({
+    success: true,
+    message: "User details updated successfully",
+    data: user,
+  });
 });
 
 // @route PUT /api/v1/auth/updatepassword
@@ -71,7 +81,7 @@ export const updatePassword = asyncHandler(async (req, res) => {
     req.body.currentPassword,
     req.body.newPassword,
   );
-  sendTokenResponse(token, 200, res);
+  sendTokenResponse(token, 200, res, "Password updated successfuly");
 });
 
 // @route POST /api/v1/auth/forgotpassword
@@ -88,18 +98,22 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     message: `Reset your password: \n\n${resetURL}`,
   });
 
-  res.status(200).json({ success: true, data: "Email sent" });
+  res.status(200).json({
+    success: true,
+    message: "Password reset email sent successfully",
+    data: null,
+  });
 });
 
 // @route PUT /api/v1/auth/resetpassword/:token
 export const resetPassword = asyncHandler(async (req, res) => {
   const token = await resetPasswordService(req.params.token, req.body.password);
 
-  sendTokenResponse(token, 200, res);
+  sendTokenResponse(token, 200, res, "Password reset successful");
 });
 
 // @route GET /api/v1/auth/confirmemail
 export const confirmEmail = asyncHandler(async (req, res) => {
   const token = await confirmEmailService(req.query.token);
-  sendTokenResponse(token, 200, res);
+  sendTokenResponse(token, 200, res, "Email confirmed successfully");
 });

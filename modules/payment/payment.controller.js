@@ -39,9 +39,17 @@ export const requestPayment = asyncHandler(async (req, res, next) => {
     await updatePaymentStatusById(payment.id, "SUCCESS");
     await markBkashMatched(transactionId);
     const updated = await updatePaymentStatusById(payment.id, "SUCCESS");
-    return res.status(201).json(updated);
+    return res.status(201).json({
+      success: true,
+      message: "Payment request created and auto-matched",
+      data: updated,
+    });
   }
-  res.status(201).json(payment);
+  res.status(201).json({
+    success: true,
+    message: "Payment request created successfully",
+    data: payment,
+  });
 });
 
 // Admin: view all payments (with filters)
@@ -58,7 +66,12 @@ export const getAllPayments = asyncHandler(async (req, res, next) => {
   if (userId) where.userId = Number(userId);
   if (courseId) where.courseId = Number(courseId);
   const payments = await findAllPayments(where, sortBy, order);
-  res.json(payments);
+  res.status(200).json({
+    success: true,
+    message: "Payments retrieved successfully",
+    data: payments,
+    count: payments.length,
+  });
 });
 
 // Admin: update payment status (approve/reject/pending)
@@ -70,11 +83,20 @@ export const updatePaymentStatus = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse("Invalid status", 400));
   }
   const payment = await updatePaymentStatusById(id, status);
-  res.json(payment);
+  res.status(200).json({
+    success: true,
+    message: "Payment status updated successfully",
+    data: payment,
+  });
 });
 
 // User: view own payment history
 export const getUserPayments = asyncHandler(async (req, res, next) => {
   const payments = await findPaymentsByUser(req.user.id);
-  res.json(payments);
+  res.status(200).json({
+    success: true,
+    message: "User payments retrieved successfully",
+    data: payments,
+    count: payments.length,
+  });
 });

@@ -15,9 +15,9 @@ export const protect = asyncHandler(async (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
   }
   // Cookie token (optional)
-  // else if (req.cookies?.token) {
-  //   token = req.cookies.token;
-  // }
+  else if (req.cookies?.token) {
+    token = req.cookies.token;
+  }
 
   if (!token) {
     return next(new ErrorResponse("Not authorized to access this route", 401));

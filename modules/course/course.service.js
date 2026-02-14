@@ -38,6 +38,85 @@ export const getAllCourses = async () => {
   });
 };
 
+export const getAllCoursesWithCounts = async () => {
+  const courses = await prisma.course.findMany({
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      thumbnail: true,
+      price: true,
+      rating: true,
+      level: true,
+      language: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      instructor: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      _count: {
+        select: {
+          modules: true,
+          enrollments: true,
+        },
+      },
+    },
+  });
+
+  // Fetch lesson counts and total hours for each course
+  const coursesWithDetails = await Promise.all(
+    courses.map(async (course) => {
+      const modules = await prisma.module.findMany({
+        where: { courseId: course.id },
+        include: {
+          lessons: {
+            select: {
+              duration: true,
+            },
+          },
+        },
+      });
+
+      const lessonCount = modules.reduce(
+        (sum, mod) => sum + mod.lessons.length,
+        0,
+      );
+      const totalHours = modules.reduce((sum, mod) => {
+        const moduleHours = mod.lessons.reduce((hrs, lesson) => {
+          return hrs + (lesson.duration ? Math.ceil(lesson.duration / 60) : 0);
+        }, 0);
+        return sum + moduleHours;
+      }, 0);
+
+      return {
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        thumbnail: course.thumbnail,
+        price: course.price,
+        rating: course.rating,
+        level: course.level,
+        language: course.language,
+        status: course.status,
+        instructor: course.instructor,
+        moduleCount: course._count.modules,
+        lessonCount,
+        totalHours,
+        enrollmentCount: course._count.enrollments,
+        createdAt: course.createdAt,
+        updatedAt: course.updatedAt,
+      };
+    }),
+  );
+
+  return coursesWithDetails;
+};
+
 // MODULE CRUD
 export const createModule = async (courseId, data) => {
   const cId = Number(courseId);
@@ -47,12 +126,12 @@ export const createModule = async (courseId, data) => {
   if (targetOrder === undefined || targetOrder === null) {
     const lastModule = await prisma.module.findFirst({
       where: { courseId: cId },
-      orderBy: { sortOrder: 'desc' },
+      orderBy: { sortOrder: "desc" },
       select: { sortOrder: true },
     });
 
     targetOrder = lastModule ? lastModule.sortOrder + 1 : 1;
-  };
+  }
 
   return prisma.module.create({
     data: {
@@ -81,7 +160,7 @@ export const createLesson = async (moduleId, data) => {
   if (targetOrder === undefined || targetOrder === null) {
     const lastLesson = await prisma.lesson.findFirst({
       where: { moduleId: mId },
-      orderBy: { sortOrder: 'desc' },
+      orderBy: { sortOrder: "desc" },
       select: { sortOrder: true },
     });
 
@@ -93,9 +172,9 @@ export const createLesson = async (moduleId, data) => {
       ...data,
       sortOrder: targetOrder,
       module: {
-        connect: { id: mId }
-      }
-    }
+        connect: { id: mId },
+      },
+    },
   });
 };
 
@@ -105,6 +184,31 @@ export const updateLesson = async (id, data) => {
 
 export const deleteLesson = async (id) => {
   return prisma.lesson.delete({ where: { id } });
+};
+
+// USER COURSES (enrolled)
+export const getUserEnrolledCourses = async (userId) => {
+  return prisma.enrollment.findMany({
+    where: { userId: Number(userId) },
+    include: {
+      course: {
+        include: {
+          modules: {
+            include: {
+              lessons: true,
+            },
+          },
+          instructor: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+  });
 };
 
 // LESSON PROGRESS
