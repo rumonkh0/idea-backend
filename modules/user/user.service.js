@@ -13,6 +13,9 @@ export const createUser = async (data) => {
       passwordHash: hashedPassword,
       role,
     },
+    omit: {
+      passwordHash: true,
+    },
   });
 };
 

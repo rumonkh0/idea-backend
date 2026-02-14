@@ -14,7 +14,7 @@ const generateJwt = (userId) => {
 
 // Register user
 export const registerUser = asyncHandler(
-  async ({ name, email, password, role }) => {
+  async ({ name, email, phone, password, role }) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt); // Industry standard rounds
 
