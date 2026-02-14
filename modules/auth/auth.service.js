@@ -31,6 +31,7 @@ export const registerUser = asyncHandler(
       data: {
         name,
         email,
+        phone,
         passwordHash: hashedPassword,
         role,
         confirmEmailToken: hashedToken, // Storing the hashed version

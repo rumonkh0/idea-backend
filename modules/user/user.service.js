@@ -1,7 +1,19 @@
 import prisma from "../../config/prisma.js";
+import bcrypt from "bcryptjs";
 
-export const createUser = (data) => {
-  return prisma.user.create({ data });
+export const createUser = async (data) => {
+  const { name, email, phone, password, role } = data;
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+  return await prisma.user.create({
+    data: {
+      name,
+      email,
+      phone,
+      passwordHash: hashedPassword,
+      role,
+    },
+  });
 };
 
 export const getUsers = () => {

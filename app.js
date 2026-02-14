@@ -109,7 +109,7 @@ app.get("/api/v1", async (req, res) => {
 
     links: {
       documentation:
-        "https://documenter.getpostman.com/view/51096995/2sBXcAKiMj",
+        "https://documenter.getpostman.com/view/51096995/2sBXcBo2q5",
     },
   });
 });

@@ -15,8 +15,8 @@ export const getUsers = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Users retrieved successfully",
-    data: users,
     count: users.length,
+    data: users,
   });
 });
 
@@ -52,6 +52,15 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
 export const getUserByEmail = asyncHandler(async (req, res) => {
   const user = await userService.getUserByEmail(req.params.email);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found with the provided email",
+      data: null,
+    });
+  }
+
   res.status(200).json({
     success: true,
     message: "User retrieved successfully",
