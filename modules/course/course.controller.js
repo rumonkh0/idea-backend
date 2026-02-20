@@ -7,6 +7,8 @@ import {
   getAllCourses,
   getAllCoursesWithCounts,
   getUserEnrolledCourses,
+  getUserEnrollment,
+  getLessonProgressForUser,
   createModule,
   updateModule,
   deleteModule,
@@ -45,12 +47,102 @@ export const removeCourse = asyncHandler(async (req, res, next) => {
 });
 
 export const getCourse = asyncHandler(async (req, res, next) => {
-  const course = await getCourseWithModulesAndLessons(Number(req.params.id));
-  res.status(200).json({
-    success: true,
-    message: "Course retrieved successfully",
-    data: course,
-  });
+  const courseId = Number(req.params.id);
+  const course = await getCourseWithModulesAndLessons(courseId);
+
+  if (!course) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Course not found", data: null });
+  }
+
+  // If requester is admin/superadmin, return full data
+  if (
+    req.user &&
+    (req.user.role === "ADMIN" || req.user.role === "SUPERADMIN")
+  ) {
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Course retrieved successfully",
+        data: course,
+      });
+  }
+
+  // Helper to strip videoUrl for non-preview lessons
+  const hideVideosForNonPreviews = (courseObj) => {
+    courseObj.modules = courseObj.modules.map((mod) => {
+      return {
+        ...mod,
+        lessons: mod.lessons.map((lesson) => {
+          if (lesson.isPreview) return lesson;
+          const { videoUrl, ...rest } = lesson;
+          return rest;
+        }),
+      };
+    });
+    return courseObj;
+  };
+
+  // If no authenticated user, treat as guest
+  if (!req.user) {
+    const guestCourse = JSON.parse(JSON.stringify(course));
+    hideVideosForNonPreviews(guestCourse);
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Course retrieved successfully",
+        data: guestCourse,
+      });
+  }
+
+  // Authenticated non-admin user: check enrollment
+  const enrollment = await getUserEnrollment(req.user.id, courseId);
+
+  if (!enrollment) {
+    const guestCourse = JSON.parse(JSON.stringify(course));
+    hideVideosForNonPreviews(guestCourse);
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Course retrieved successfully",
+        data: guestCourse,
+      });
+  }
+
+  // User is enrolled: include lesson completion info
+  const lessonIds = [];
+  course.modules.forEach((mod) =>
+    mod.lessons.forEach((l) => lessonIds.push(l.id)),
+  );
+
+  const progresses = await getLessonProgressForUser(req.user.id, lessonIds);
+  const progressMap = progresses.reduce((acc, p) => {
+    acc[p.lessonId] = p;
+    return acc;
+  }, {});
+
+  // Attach completion info
+  const enrolledCourse = JSON.parse(JSON.stringify(course));
+  enrolledCourse.modules = enrolledCourse.modules.map((mod) => ({
+    ...mod,
+    lessons: mod.lessons.map((lesson) => ({
+      ...lesson,
+      isCompleted: !!progressMap[lesson.id]?.isCompleted,
+      completedAt: progressMap[lesson.id]?.completedAt ?? null,
+    })),
+  }));
+
+  return res
+    .status(200)
+    .json({
+      success: true,
+      message: "Course retrieved successfully",
+      data: enrolledCourse,
+    });
 });
 
 export const getCourses = asyncHandler(async (req, res, next) => {
@@ -61,6 +153,7 @@ export const getCourses = asyncHandler(async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Courses retrieved successfully (summary view)",
+      count: courses.length,
       data: courses,
     });
   }
@@ -69,17 +162,54 @@ export const getCourses = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Courses retrieved successfully",
+    count: courses.length,
     data: courses,
   });
 });
 
 export const getCoursesofUser = asyncHandler(async (req, res, next) => {
   const { userId } = req.params;
+
   const enrollments = await getUserEnrolledCourses(userId);
+
   res.status(200).json({
     success: true,
     message: "User courses retrieved successfully",
+    count: enrollments.length,
     data: enrollments,
+  });
+});
+
+// STUDENT: Get current user's enrolled courses
+export const getMyCourses = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const enrollments = await getUserEnrolledCourses(userId);
+  res.status(200).json({
+    success: true,
+    message: "My courses retrieved successfully",
+    data: enrollments,
+  });
+});
+
+// STUDENT: Get a single course (only if the current user is enrolled)
+export const getMySingleCourse = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const courseId = Number(req.params.id);
+
+  const enrollment = await getUserEnrollment(userId, courseId);
+
+  if (!enrollment) {
+    return res.status(404).json({
+      success: false,
+      message: "Course not found or not enrolled",
+      data: null,
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Course retrieved successfully",
+    data: enrollment.course,
   });
 });
 

@@ -211,6 +211,43 @@ export const getUserEnrolledCourses = async (userId) => {
   });
 };
 
+// Get a single enrollment by user and course (used for "my" single course view)
+export const getUserEnrollment = async (userId, courseId) => {
+  return prisma.enrollment.findFirst({
+    where: { userId: Number(userId), courseId: Number(courseId) },
+    include: {
+      course: {
+        include: {
+          modules: {
+            include: {
+              lessons: true,
+            },
+          },
+          instructor: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+// Fetch lesson progress records for a user for a list of lesson IDs
+export const getLessonProgressForUser = async (userId, lessonIds) => {
+  if (!lessonIds || lessonIds.length === 0) return [];
+
+  return prisma.lessonProgress.findMany({
+    where: {
+      userId: Number(userId),
+      lessonId: { in: lessonIds.map((id) => Number(id)) },
+    },
+  });
+};
+
 // LESSON PROGRESS
 export const completeLesson = async (userId, lessonId) => {
   return prisma.lessonProgress.upsert({

@@ -27,10 +27,24 @@ export const getUserById = (id) => {
   return prisma.user.findUnique({ where: { id } });
 };
 
-export const updateUser = (id, data) => {
-  return prisma.user.update({ where: { id }, data });
-};
+export const updateUser = async (id, data) => {
+  const updateData = { ...data };
 
+  // If password is provided, hash it
+  if (updateData.password) {
+    const hashedPassword = await bcrypt.hash(updateData.password, 10);
+    updateData.passwordHash = hashedPassword;
+    delete updateData.password; // remove plain password
+  }
+
+  return prisma.user.update({
+    where: { id },
+    data: updateData,
+    omit: {
+      passwordHash: true,
+    },
+  });
+};
 export const deleteUser = (id) => {
   return prisma.user.delete({ where: { id } });
 };
