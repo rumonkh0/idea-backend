@@ -14,29 +14,11 @@ const router = express.Router();
 router.post("/webhook", bkashWebhook);
 
 // Admin routes (protected, admin/superadmin only)
-router.get(
-  "/",
-  protect,
-  authorize("ADMIN", "SUPERADMIN"),
-  getAllBkashTransactions_Handler,
-);
-router.get(
-  "/:id",
-  protect,
-  authorize("ADMIN", "SUPERADMIN"),
-  getBkashTransaction,
-);
-router.patch(
-  "/:id",
-  protect,
-  authorize("ADMIN", "SUPERADMIN"),
-  updateBkashTransaction_Handler,
-);
-router.delete(
-  "/:id",
-  protect,
-  authorize("ADMIN", "SUPERADMIN"),
-  deleteBkashTransaction_Handler,
-);
+router.use(protect, authorize("ADMIN", "SUPERADMIN"));
+
+router.get("/", getAllBkashTransactions_Handler);
+router.get("/:id", getBkashTransaction);
+router.patch("/:id", updateBkashTransaction_Handler);
+router.delete("/:id", deleteBkashTransaction_Handler);
 
 export default router;

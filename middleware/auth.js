@@ -16,8 +16,11 @@ export const protect = asyncHandler(async (req, res, next) => {
   }
   // Cookie token (optional)
   else if (req.cookies?.token) {
+    // console.log("Token found in cookies");
     token = req.cookies.token;
   }
+
+  // console.log("Received token:", token);
 
   if (!token) {
     return next(new ErrorResponse("Not authorized to access this route", 401));
@@ -25,7 +28,7 @@ export const protect = asyncHandler(async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+    // console.log("Decoded JWT:", decoded);
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
       select: {

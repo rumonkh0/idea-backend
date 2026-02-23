@@ -132,8 +132,8 @@ model Review {
 
 model Payment {
   id            Int           @id @default(autoincrement())
-  amount        Decimal       @db.Decimal(10, 2)
-  currency      String
+  amount        Decimal?       @db.Decimal(10, 2)
+  currency      String?
   paymentMethod String
   transactionId String        @unique
   status        PaymentStatus

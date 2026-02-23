@@ -12,8 +12,8 @@ import { findBkashByTxid, markBkashMatched } from "./bkash.service.js";
 
 // User requests a payment (status: PENDING)
 export const requestPayment = asyncHandler(async (req, res, next) => {
-  const { courseId, transactionId, amount, currency, paymentMethod } = req.body;
-  if (!courseId || !transactionId || !amount || !currency || !paymentMethod) {
+  const { courseId, transactionId, amount, paymentMethod } = req.body;
+  if (!courseId || !transactionId || !amount || !paymentMethod) {
     return next(new ErrorResponse("All fields are required", 400));
   }
   // Check if course exists
@@ -29,16 +29,21 @@ export const requestPayment = asyncHandler(async (req, res, next) => {
     courseId,
     transactionId,
     amount,
-    currency,
     paymentMethod,
   });
 
   // Immediately check if a bKash transaction with same txid already exists
   const bkashTx = await findBkashByTxid(transactionId);
-  if (bkashTx && Number(bkashTx.amount) === Number(amount)) {
-    await updatePaymentStatusById(payment.id, "SUCCESS");
-    await markBkashMatched(transactionId);
+
+  if (
+    bkashTx &&
+    !isNaN(Number(bkashTx.amount)) &&
+    !isNaN(Number(amount)) &&
+    Number(bkashTx.amount) >= Number(course.price)
+  ) {
     const updated = await updatePaymentStatusById(payment.id, "SUCCESS");
+    await markBkashMatched(transactionId);
+    console.log(updated);
     return res.status(201).json({
       success: true,
       message: "Payment request created and auto-matched",
