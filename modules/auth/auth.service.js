@@ -6,9 +6,27 @@ import ErrorResponse from "../../utils/errorResponse.js";
 import asyncHandler from "../../middleware/async.js";
 
 // Generate JWT
-const generateJwt = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+// const generateJwt = (userId) => {
+//   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+//     expiresIn: process.env.JWT_EXPIRE,
+//   });
+// };
+
+const generateJwt = (user) => {
+  const payload = {
+    id: user.id,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+  };
+
+  return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
+    header: {
+      alg: "HS256",
+      typ: "JWT",
+      kid: "my-key-id",   // optional custom header field
+    },
   });
 };
 
@@ -59,7 +77,7 @@ export const loginUser = asyncHandler(async ({ email, password }) => {
     throw new ErrorResponse("Invalid credentials", 401);
   }
 
-  const token = generateJwt(user.id);
+  const token = generateJwt(user);
   return { user, token };
 });
 
@@ -156,7 +174,7 @@ export const resetPasswordService = asyncHandler(async (token, newPassword) => {
     },
   });
 
-  return generateJwt(user.id);
+  return generateJwt(user);
 });
 
 // Confirm email
@@ -182,5 +200,5 @@ export const confirmEmailService = asyncHandler(async (token) => {
     },
   });
 
-  return generateJwt(user.id);
+  return generateJwt(user);
 });
