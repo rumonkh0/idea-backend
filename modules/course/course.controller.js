@@ -265,8 +265,26 @@ export const removeLesson = asyncHandler(async (req, res, next) => {
 
 // LESSON PROGRESS
 export const completeLessonController = asyncHandler(async (req, res, next) => {
-  const { userId, lessonId } = req.body;
-  const progress = await completeLesson(Number(userId), Number(lessonId));
+  let userId;
+  let lessonId;
+
+  if (req.user.role === "ADMIN" || req.user.role === "SUPERADMIN") {
+    userId = Number(req.body.userId);
+    lessonId = Number(req.body.lessonId);
+  } else {
+    userId = Number(req.user.id);
+    lessonId = Number(req.params.lessonId);
+  }
+
+  if (!userId || !lessonId) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid userId or lessonId",
+    });
+  }
+
+  const progress = await completeLesson(userId, lessonId);
+
   res.status(200).json({
     success: true,
     message: "Lesson marked as completed",

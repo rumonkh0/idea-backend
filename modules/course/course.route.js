@@ -1,28 +1,24 @@
 import express from "express";
 import {
-   addCourse,
-   editCourse,
-   removeCourse,
-   getCourse,
-   getCourses,
-   addModule,
-   editModule,
-   removeModule,
-   addLesson,
-   editLesson,
-   removeLesson,
-   completeLessonController,
-   getCoursesofUser,
-   getMyCourses,
-   getMySingleCourse,
+  addCourse,
+  editCourse,
+  removeCourse,
+  getCourse,
+  getCourses,
+  addModule,
+  editModule,
+  removeModule,
+  addLesson,
+  editLesson,
+  removeLesson,
+  completeLessonController,
+  getCoursesofUser,
+  getMyCourses,
+  getMySingleCourse,
 } from "./course.controller.js";
 import { authorize, protect } from "../../middleware/auth.js";
 
 const router = express.Router();
-
-
-
-
 
 /* ===========================
    STUDENT ROUTES
@@ -32,8 +28,7 @@ router.get("/me", protect, getMyCourses);
 router.get("/:id/me", protect, getMySingleCourse);
 
 // Lesson progress
-router.post("/lesson/complete", completeLessonController);
-
+router.post("/lesson/complete/:lessonId", protect, completeLessonController);
 
 /* ===========================
    PUBLIC ROUTES
@@ -42,13 +37,11 @@ router.post("/lesson/complete", completeLessonController);
 router.get("/", getCourses);
 router.get("/:id", getCourse);
 
-
-
 /* ===========================
    ADMIN ROUTES
 =========================== */
 
-router.use(protect, authorize("ADMIN", "SUPERADMIN"))
+router.use(protect, authorize("ADMIN", "SUPERADMIN"));
 
 // Course routes
 router.post("/", addCourse);
@@ -65,6 +58,5 @@ router.delete("/module/:id", removeModule);
 router.post("/module/:moduleId/lesson", addLesson);
 router.put("/lesson/:id", editLesson);
 router.delete("/lesson/:id", removeLesson);
-
 
 export default router;

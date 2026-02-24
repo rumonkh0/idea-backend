@@ -188,28 +188,21 @@ export const deleteLesson = async (id) => {
 
 // USER COURSES (enrolled)
 export const getUserEnrolledCourses = async (userId) => {
-  // Fetch enrollments with course -> modules -> lessons and the user's
-  // progress for each lesson (via the `progress` relation filtered by user).
+  const numericUserId = Number(userId);
+
+  // 1️⃣ Fetch enrollments WITHOUT progress
   const enrollments = await prisma.enrollment.findMany({
-    where: { userId: Number(userId) },
+    where: { userId: numericUserId },
     include: {
       course: {
         include: {
           modules: {
             include: {
               lessons: {
-                include: {
-                  progress: {
-                    where: { userId: Number(userId) },
-                    select: {
-                      isCompleted: true,
-                      completedAt: true,
-                      userId: true,
-                      lessonId: true,
-                    },
-                  },
+                omit: {
+                  isPreview: true,
                 },
-              },
+              }, 
             },
           },
           instructor: {
@@ -224,29 +217,43 @@ export const getUserEnrolledCourses = async (userId) => {
     },
   });
 
-  console.log("Raw enrollments with progress:", JSON.stringify(enrollments, null, 2));
+  // 2️⃣ Fetch all lesson progress for this user
+  const lessonProgress = await prisma.lessonProgress.findMany({
+    where: { userId: numericUserId },
+    select: {
+      lessonId: true,
+      isCompleted: true,
+      completedAt: true,
+    },
+  });
 
-  return enrollments;
+  // 3️⃣ Create fast lookup map
+  const progressMap = new Map(lessonProgress.map((p) => [p.lessonId, p]));
 
-  // Enrich lessons with a `complete` boolean and `completedAt`, remove raw `progress` array
-  const enriched = enrollments.map((en) => {
-    const course = JSON.parse(JSON.stringify(en.course));
-    if (course && course.modules) {
-      course.modules = course.modules.map((mod) => ({
-        ...mod,
-        lessons: mod.lessons.map((lesson) => {
-          const prog = (lesson.progress && lesson.progress[0]) || null;
-          const { progress, ...rest } = lesson;
-          const completedFlag = !!prog?.isCompleted;
-          return {
-            ...rest,
-            completed: completedFlag,
-            completedAt: prog?.completedAt ?? null,
-          };
-        }),
-      }));
-    }
-    return { ...en, course };
+  // 4️⃣ Attach progress to lessons
+  const enriched = enrollments.map((enrollment) => {
+    const course = enrollment.course;
+
+    if (!course?.modules) return enrollment;
+
+    return {
+      ...enrollment,
+      course: {
+        ...course,
+        modules: course.modules.map((mod) => ({
+          ...mod,
+          lessons: mod.lessons.map((lesson) => {
+            const prog = progressMap.get(lesson.id);
+
+            return {
+              ...lesson,
+              completed: !!prog?.isCompleted,
+              completedAt: prog?.completedAt ?? null,
+            };
+          }),
+        })),
+      },
+    };
   });
 
   return enriched;
