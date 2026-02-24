@@ -17,19 +17,33 @@ const sendTokenResponse = (
   statusCode,
   res,
   message = "Successfully authenticated",
+  user
 ) => {
   const options = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000,
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
   };
 
+  // pick only safe fields
+  const safeUser = {
+    id: user._id || user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+  };
+
   res
     .status(statusCode)
     .cookie("token", token, options)
-    .json({ success: true, message, token });
+    .json({
+      success: true,
+      message,
+      token,
+      user: safeUser,
+    });
 };
 
 // @route POST /api/v1/auth/register
@@ -55,13 +69,14 @@ export const register = asyncHandler(async (req, res) => {
     201,
     res,
     "User registered successfully",
+    user
   );
 });
 
 // @route POST /api/v1/auth/login
 export const login = asyncHandler(async (req, res) => {
-  const { token } = await loginUser(req.body);
-  sendTokenResponse(token, 200, res, "Login successful");
+  const { user, token } = await loginUser(req.body);
+  sendTokenResponse(token, 200, res, "Login successful", user);
 });
 
 // @route PUT /api/v1/auth/updatedetails
