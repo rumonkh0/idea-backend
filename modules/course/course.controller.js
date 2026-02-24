@@ -61,13 +61,11 @@ export const getCourse = asyncHandler(async (req, res, next) => {
     req.user &&
     (req.user.role === "ADMIN" || req.user.role === "SUPERADMIN")
   ) {
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Course retrieved successfully",
-        data: course,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Course retrieved successfully",
+      data: course,
+    });
   }
 
   // Helper to strip videoUrl for non-preview lessons
@@ -89,13 +87,11 @@ export const getCourse = asyncHandler(async (req, res, next) => {
   if (!req.user) {
     const guestCourse = JSON.parse(JSON.stringify(course));
     hideVideosForNonPreviews(guestCourse);
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Course retrieved successfully",
-        data: guestCourse,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Course retrieved successfully",
+      data: guestCourse,
+    });
   }
 
   // Authenticated non-admin user: check enrollment
@@ -104,13 +100,11 @@ export const getCourse = asyncHandler(async (req, res, next) => {
   if (!enrollment) {
     const guestCourse = JSON.parse(JSON.stringify(course));
     hideVideosForNonPreviews(guestCourse);
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Course retrieved successfully",
-        data: guestCourse,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Course retrieved successfully",
+      data: guestCourse,
+    });
   }
 
   // User is enrolled: include lesson completion info
@@ -136,13 +130,11 @@ export const getCourse = asyncHandler(async (req, res, next) => {
     })),
   }));
 
-  return res
-    .status(200)
-    .json({
-      success: true,
-      message: "Course retrieved successfully",
-      data: enrolledCourse,
-    });
+  return res.status(200).json({
+    success: true,
+    message: "Course retrieved successfully",
+    data: enrolledCourse,
+  });
 });
 
 export const getCourses = asyncHandler(async (req, res, next) => {
@@ -184,6 +176,7 @@ export const getCoursesofUser = asyncHandler(async (req, res, next) => {
 export const getMyCourses = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
   const enrollments = await getUserEnrolledCourses(userId);
+
   res.status(200).json({
     success: true,
     message: "My courses retrieved successfully",

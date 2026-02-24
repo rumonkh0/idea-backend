@@ -188,14 +188,28 @@ export const deleteLesson = async (id) => {
 
 // USER COURSES (enrolled)
 export const getUserEnrolledCourses = async (userId) => {
-  return prisma.enrollment.findMany({
+  // Fetch enrollments with course -> modules -> lessons and the user's
+  // progress for each lesson (via the `progress` relation filtered by user).
+  const enrollments = await prisma.enrollment.findMany({
     where: { userId: Number(userId) },
     include: {
       course: {
         include: {
           modules: {
             include: {
-              lessons: true,
+              lessons: {
+                include: {
+                  progress: {
+                    where: { userId: Number(userId) },
+                    select: {
+                      isCompleted: true,
+                      completedAt: true,
+                      userId: true,
+                      lessonId: true,
+                    },
+                  },
+                },
+              },
             },
           },
           instructor: {
@@ -209,18 +223,54 @@ export const getUserEnrolledCourses = async (userId) => {
       },
     },
   });
+
+  // Enrich lessons with a `complete` boolean and `completedAt`, remove raw `progress` array
+  const enriched = enrollments.map((en) => {
+    const course = JSON.parse(JSON.stringify(en.course));
+    if (course && course.modules) {
+      course.modules = course.modules.map((mod) => ({
+        ...mod,
+        lessons: mod.lessons.map((lesson) => {
+          const prog = (lesson.progress && lesson.progress[0]) || null;
+          const { progress, ...rest } = lesson;
+          const completedFlag = !!prog?.isCompleted;
+          return {
+            ...rest,
+            isCompleted: completedFlag,
+            completed: completedFlag,
+            completedAt: prog?.completedAt ?? null,
+          };
+        }),
+      }));
+    }
+    return { ...en, course };
+  });
+
+  return enriched;
 };
 
 // Get a single enrollment by user and course (used for "my" single course view)
 export const getUserEnrollment = async (userId, courseId) => {
-  return prisma.enrollment.findFirst({
+  const enrollment = await prisma.enrollment.findFirst({
     where: { userId: Number(userId), courseId: Number(courseId) },
     include: {
       course: {
         include: {
           modules: {
             include: {
-              lessons: true,
+              lessons: {
+                include: {
+                  progress: {
+                    where: { userId: Number(userId) },
+                    select: {
+                      isCompleted: true,
+                      completedAt: true,
+                      userId: true,
+                      lessonId: true,
+                    },
+                  },
+                },
+              },
             },
           },
           instructor: {
@@ -234,6 +284,29 @@ export const getUserEnrollment = async (userId, courseId) => {
       },
     },
   });
+
+  if (!enrollment) return null;
+
+  // Enrich lessons with completion info
+  const course = JSON.parse(JSON.stringify(enrollment.course));
+  if (course && course.modules) {
+    course.modules = course.modules.map((mod) => ({
+      ...mod,
+      lessons: mod.lessons.map((lesson) => {
+        const prog = (lesson.progress && lesson.progress[0]) || null;
+        const { progress, ...rest } = lesson;
+        const completedFlag = !!prog?.isCompleted;
+        return {
+          ...rest,
+          isCompleted: completedFlag,
+          completed: completedFlag,
+          completedAt: prog?.completedAt ?? null,
+        };
+      }),
+    }));
+  }
+
+  return { ...enrollment, course };
 };
 
 // Fetch lesson progress records for a user for a list of lesson IDs
