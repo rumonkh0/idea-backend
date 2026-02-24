@@ -15,6 +15,7 @@ import asyncHandler from "../../middleware/async.js";
 const generateJwt = (user) => {
   const payload = {
     id: user.id,
+    name: user.name,
     email: user.email,
     phone: user.phone,
     role: user.role,
@@ -101,12 +102,12 @@ export const updatePasswordService = asyncHandler(
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { passwordHash: hashedPassword },
     });
 
-    return generateJwt(userId);
+    return generateJwt(updatedUser);
   },
 );
 
