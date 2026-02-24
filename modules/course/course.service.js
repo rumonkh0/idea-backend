@@ -236,7 +236,6 @@ export const getUserEnrolledCourses = async (userId) => {
           const completedFlag = !!prog?.isCompleted;
           return {
             ...rest,
-            isCompleted: completedFlag,
             completed: completedFlag,
             completedAt: prog?.completedAt ?? null,
           };
