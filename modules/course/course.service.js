@@ -224,6 +224,10 @@ export const getUserEnrolledCourses = async (userId) => {
     },
   });
 
+  console.log("Raw enrollments with progress:", JSON.stringify(enrollments, null, 2));
+
+  return enrollments;
+
   // Enrich lessons with a `complete` boolean and `completedAt`, remove raw `progress` array
   const enriched = enrollments.map((en) => {
     const course = JSON.parse(JSON.stringify(en.course));
