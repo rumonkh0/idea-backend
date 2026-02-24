@@ -187,6 +187,7 @@ export const getMyCourses = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "My courses retrieved successfully",
+    count: enrollments.length,
     data: enrollments,
   });
 });
