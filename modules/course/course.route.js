@@ -1,32 +1,27 @@
 import express from "express";
 import {
-  addCourse,
-  editCourse,
-  removeCourse,
-  getCourse,
-  getCourses,
-  addModule,
-  editModule,
-  removeModule,
-  addLesson,
-  editLesson,
-  removeLesson,
-  completeLessonController,
-  getCoursesofUser,
-  getMyCourses,
-  getMySingleCourse,
+   addCourse,
+   editCourse,
+   removeCourse,
+   getCourse,
+   getCourses,
+   addModule,
+   editModule,
+   removeModule,
+   addLesson,
+   editLesson,
+   removeLesson,
+   completeLessonController,
+   getCoursesofUser,
+   getMyCourses,
+   getMySingleCourse,
 } from "./course.controller.js";
 import { authorize, protect } from "../../middleware/auth.js";
 
 const router = express.Router();
 
 
-/* ===========================
-   PUBLIC ROUTES
-=========================== */
 
-router.get("/", getCourses);
-router.get("/:id", getCourse);
 
 
 /* ===========================
@@ -38,6 +33,14 @@ router.get("/:id/me", protect, getMySingleCourse);
 
 // Lesson progress
 router.post("/lesson/complete", completeLessonController);
+
+
+/* ===========================
+   PUBLIC ROUTES
+=========================== */
+
+router.get("/", getCourses);
+router.get("/:id", getCourse);
 
 
 
