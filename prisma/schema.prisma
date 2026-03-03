@@ -60,10 +60,10 @@ model Course {
 }
 
 model Module {
-  id        Int       @id @default(autoincrement())
-  title     String
-  sortOrder Int
-  createdAt DateTime  @default(now())
+  id          Int       @id @default(autoincrement())  
+  title       String
+  sortOrder   Int
+  createdAt   DateTime  @default(now())
 
   // relations
   courseId  Int
@@ -72,13 +72,15 @@ model Module {
 }
 
 model Lesson {
-  id        Int       @id @default(autoincrement())
-  title     String
-  videoUrl  String
-  duration  Int?
-  sortOrder Int
-  isPreview Boolean   @default(false)
-  createdAt DateTime  @default(now())
+  id          Int       @id @default(autoincrement())     
+  video_id    String?
+  library_id  Int?
+  title       String
+  videoUrl    String
+  duration    Int?
+  sortOrder   Int
+  isPreview   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
 
   // relations
   moduleId  Int
