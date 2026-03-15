@@ -1,4 +1,6 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import colors from "colors";
 import cookieParser from "cookie-parser";
@@ -21,6 +23,7 @@ connectDB();
 import auth from "./modules/auth/auth.route.js";
 import users from "./modules/user/user.route.js";
 import courses from "./modules/course/course.route.js";
+import blogs from "./modules/blog/blog.route.js";
 import bkash from "./modules/payment/bkash.route.js";
 import payments from "./modules/payment/payment.route.js";
 
@@ -59,12 +62,15 @@ app.use(hpp());
 app.use(cors());
 
 // Set static folder
-app.use(express.static("public"));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, "public")));
 
 // Mount routers
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/users", users);
 app.use("/api/v1/courses", courses);
+app.use("/api/v1/blogs", blogs);
 // bKash webhook (public)
 app.use("/api/v1/bkash", bkash);
 // Payment routes
