@@ -16,6 +16,7 @@ import {
   updateLesson,
   deleteLesson,
   completeLesson,
+  uploadLessonVideoToBunny,
 } from "./course.service.js";
 
 // COURSE
@@ -237,7 +238,21 @@ export const removeModule = asyncHandler(async (req, res, next) => {
 
 // LESSON
 export const addLesson = asyncHandler(async (req, res, next) => {
-  const lesson = await createLesson(Number(req.params.moduleId), req.body);
+  const lessonData = { ...req.body };
+
+  if (req.file) {
+    const upload = await uploadLessonVideoToBunny({
+      filePath: req.file.path,
+      mimeType: req.file.mimetype,
+      title: lessonData.title || req.file.originalname,
+    });
+
+    lessonData.video_id = upload.videoId;
+    lessonData.library_id = upload.libraryId;
+    lessonData.videoUrl = upload.videoUrl;
+  }
+
+  const lesson = await createLesson(Number(req.params.moduleId), lessonData);
   res.status(201).json({
     success: true,
     message: "Lesson created successfully",
@@ -246,7 +261,21 @@ export const addLesson = asyncHandler(async (req, res, next) => {
 });
 
 export const editLesson = asyncHandler(async (req, res, next) => {
-  const lesson = await updateLesson(Number(req.params.id), req.body);
+  const lessonData = { ...req.body };
+
+  if (req.file) {
+    const upload = await uploadLessonVideoToBunny({
+      filePath: req.file.path,
+      mimeType: req.file.mimetype,
+      title: lessonData.title || req.file.originalname,
+    });
+
+    lessonData.video_id = upload.videoId;
+    lessonData.library_id = upload.libraryId;
+    lessonData.videoUrl = upload.videoUrl;
+  }
+
+  const lesson = await updateLesson(Number(req.params.id), lessonData);
   res.status(200).json({
     success: true,
     message: "Lesson updated successfully",

@@ -1,4 +1,79 @@
 import prisma from "../../config/prisma.js";
+import fs from "fs";
+
+const getBunnyConfig = () => {
+  const libraryId = process.env.BUNNY_LIBRARY_ID;
+  const accessKey = process.env.BUNNY_STREAM_API_KEY;
+  const hostname = process.env.BUNNY_STREAM_HOSTNAME;
+
+  if (!libraryId || !accessKey || !hostname) {
+    throw new Error("Bunny Stream configuration missing");
+  }
+
+  return { libraryId, accessKey, hostname };
+};
+
+export const uploadLessonVideoToBunny = async ({
+  filePath,
+  mimeType,
+  title,
+}) => {
+  const { libraryId, accessKey, hostname } = getBunnyConfig();
+  const createRes = await fetch(
+    `https://video.bunnycdn.com/library/${libraryId}/videos`,
+    {
+      method: "POST",
+      headers: {
+        AccessKey: accessKey,
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ title }),
+    },
+  );
+
+  if (!createRes.ok) {
+    const errorText = await createRes.text();
+    throw new Error(`Bunny create video failed: ${errorText}`);
+  }
+
+  const created = await createRes.json();
+  const videoId = created?.guid || created?.videoId || created?.id;
+  if (!videoId) {
+    throw new Error("Bunny create video failed: missing video id");
+  }
+
+  const stream = fs.createReadStream(filePath);
+  try {
+    const uploadRes = await fetch(
+      `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`,
+      {
+        method: "PUT",
+        headers: {
+          AccessKey: accessKey,
+          accept: "application/json",
+          "content-type": mimeType || "application/octet-stream",
+        },
+        body: stream,
+      },
+    );
+
+    if (!uploadRes.ok) {
+      const errorText = await uploadRes.text();
+      throw new Error(`Bunny upload failed: ${errorText}`);
+    }
+  } finally {
+    await fs.promises.unlink(filePath).catch(() => null);
+  }
+
+  const videoUrl = `https://${hostname}/${videoId}/playlist.m3u8`;
+
+  return {
+    videoId,
+    libraryId: Number(libraryId),
+    videoUrl,
+  };
+};
 
 // COURSE CRUD
 export const createCourse = async (data) => {
@@ -202,7 +277,7 @@ export const getUserEnrolledCourses = async (userId) => {
                 omit: {
                   isPreview: true,
                 },
-              }, 
+              },
             },
           },
           instructor: {
