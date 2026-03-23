@@ -19,6 +19,7 @@ export const uploadLessonVideoToBunny = async ({
   title,
 }) => {
   const { libraryId, accessKey, hostname } = getBunnyConfig();
+  await fs.promises.access(filePath, fs.constants.R_OK);
   const createRes = await fetch(
     `https://video.bunnycdn.com/library/${libraryId}/videos`,
     {
@@ -44,27 +45,26 @@ export const uploadLessonVideoToBunny = async ({
   }
 
   const stream = fs.createReadStream(filePath);
-  try {
-    const uploadRes = await fetch(
-      `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`,
-      {
-        method: "PUT",
-        headers: {
-          AccessKey: accessKey,
-          accept: "application/json",
-          "content-type": mimeType || "application/octet-stream",
-        },
-        body: stream,
+  const uploadRes = await fetch(
+    `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`,
+    {
+      method: "PUT",
+      duplex: "half",
+      headers: {
+        AccessKey: accessKey,
+        accept: "application/json",
+        "content-type": mimeType || "application/octet-stream",
       },
-    );
+      body: stream,
+    },
+  );
 
-    if (!uploadRes.ok) {
-      const errorText = await uploadRes.text();
-      throw new Error(`Bunny upload failed: ${errorText}`);
-    }
-  } finally {
-    await fs.promises.unlink(filePath).catch(() => null);
+  if (!uploadRes.ok) {
+    const errorText = await uploadRes.text();
+    throw new Error(`Bunny upload failed: ${errorText}`);
   }
+
+  await fs.promises.unlink(filePath).catch(() => null);
 
   const videoUrl = `https://${hostname}/${videoId}/playlist.m3u8`;
 

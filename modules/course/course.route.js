@@ -34,6 +34,9 @@ if (!fs.existsSync(lessonUploadDir)) {
 
 const lessonStorage = multer.diskStorage({
   destination: (req, file, cb) => {
+    if (!fs.existsSync(lessonUploadDir)) {
+      fs.mkdirSync(lessonUploadDir, { recursive: true });
+    }
     cb(null, lessonUploadDir);
   },
   filename: (req, file, cb) => {
