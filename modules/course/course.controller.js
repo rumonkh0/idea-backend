@@ -1,4 +1,5 @@
 import asyncHandler from "../../middleware/async.js";
+import fs from "fs";
 import {
   createCourse,
   updateCourse,
@@ -241,6 +242,14 @@ export const addLesson = asyncHandler(async (req, res, next) => {
   const lessonData = { ...req.body };
 
   if (req.file) {
+    if (!req.file.mimetype.startsWith("video/")) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({
+        success: false,
+        message: "Please upload a video file",
+      });
+    }
+
     const upload = await uploadLessonVideoToBunny({
       filePath: req.file.path,
       mimeType: req.file.mimetype,
@@ -250,6 +259,9 @@ export const addLesson = asyncHandler(async (req, res, next) => {
     lessonData.video_id = upload.videoId;
     lessonData.library_id = upload.libraryId;
     lessonData.videoUrl = upload.videoUrl;
+    if (upload.duration) {
+      lessonData.duration = upload.duration;
+    }
   }
 
   const lesson = await createLesson(Number(req.params.moduleId), lessonData);
@@ -264,6 +276,14 @@ export const editLesson = asyncHandler(async (req, res, next) => {
   const lessonData = { ...req.body };
 
   if (req.file) {
+    if (!req.file.mimetype.startsWith("video/")) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({
+        success: false,
+        message: "Please upload a video file",
+      });
+    }
+
     const upload = await uploadLessonVideoToBunny({
       filePath: req.file.path,
       mimeType: req.file.mimetype,
@@ -273,6 +293,9 @@ export const editLesson = asyncHandler(async (req, res, next) => {
     lessonData.video_id = upload.videoId;
     lessonData.library_id = upload.libraryId;
     lessonData.videoUrl = upload.videoUrl;
+    if (upload.duration) {
+      lessonData.duration = upload.duration;
+    }
   }
 
   const lesson = await updateLesson(Number(req.params.id), lessonData);

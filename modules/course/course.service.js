@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma.js";
 import fs from "fs";
+import { getVideoDuration } from "../../utils/videoUtils.js";
 
 const getBunnyConfig = () => {
   const libraryId = process.env.BUNNY_LIBRARY_ID;
@@ -20,6 +21,13 @@ export const uploadLessonVideoToBunny = async ({
 }) => {
   const { libraryId, accessKey, hostname } = getBunnyConfig();
   await fs.promises.access(filePath, fs.constants.R_OK);
+
+  // Extract duration if it's a video
+  let duration = null;
+  if (mimeType && mimeType.startsWith("video/")) {
+    duration = await getVideoDuration(filePath);
+  }
+
   const createRes = await fetch(
     `https://video.bunnycdn.com/library/${libraryId}/videos`,
     {
@@ -72,6 +80,7 @@ export const uploadLessonVideoToBunny = async ({
     videoId,
     libraryId: Number(libraryId),
     videoUrl,
+    duration,
   };
 };
 
