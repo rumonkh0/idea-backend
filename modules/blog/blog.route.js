@@ -47,6 +47,11 @@ const blogUpload = upload.fields([
   { name: "gallery", maxCount: 10 },
 ]);
 
+// User routes
+router.get("/", getPublishedBlogs);
+router.get("/slug/:slug", getPublishedBlogBySlug);
+
+
 // Admin routes
 router.use(protect, authorize("ADMIN", "SUPERADMIN"));
 router.post("/", blogUpload, addBlog);
@@ -57,13 +62,5 @@ router.patch("/:id/publish", publishBlog);
 router.get("/all", getAllBlogs);
 router.get("/id/:id", getBlogById);
 
-// Remove admin protection for user routes
-router.use((req, res, next) => {
-  next();
-});
-
-// User routes
-router.get("/", getPublishedBlogs);
-router.get("/slug/:slug", getPublishedBlogBySlug);
 
 export default router;
