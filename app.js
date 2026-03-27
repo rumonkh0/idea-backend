@@ -26,6 +26,8 @@ import courses from "./modules/course/course.route.js";
 import blogs from "./modules/blog/blog.route.js";
 import bkash from "./modules/payment/bkash.route.js";
 import payments from "./modules/payment/payment.route.js";
+import events from "./modules/event/event.route.js";
+import messages from "./modules/message/message.route.js";
 
 // Initialize app
 const app = express();
@@ -79,6 +81,10 @@ app.use("/api/v1/blogs", blogs);
 app.use("/api/v1/bkash", bkash);
 // Payment routes
 app.use("/api/v1/payments", payments);
+// Event routes
+app.use("/api/v1/events", events);
+// Message routes
+app.use("/api/v1/messages", messages);
 app.get("/api/v1", async (req, res) => {
   const result = await pool.query("SELECT NOW()");
 
@@ -111,7 +117,7 @@ app.get("/api/v1", async (req, res) => {
       iso: now.toISOString(),
       readable: readableTime,
     },
-
+    
     client: {
       protocol: req.protocol,
       secure: req.secure,
@@ -119,7 +125,7 @@ app.get("/api/v1", async (req, res) => {
 
     links: {
       documentation:
-        "https://documenter.getpostman.com/view/51096995/2sBXijKCPZ",
+        "https://documenter.getpostman.com/view/51096995/2sBXikpWzC",
     },
   });
 });
