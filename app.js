@@ -29,6 +29,8 @@ import payments from "./modules/payment/payment.route.js";
 import events from "./modules/event/event.route.js";
 import messages from "./modules/message/message.route.js";
 
+import quiz from "./modules/quiz/quiz.route.js";
+
 // Initialize app
 const app = express();
 
@@ -48,7 +50,7 @@ if (process.env.NODE_ENV === "development") {
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
+  }),
 );
 
 // Prevent XSS attacks
@@ -85,6 +87,8 @@ app.use("/api/v1/payments", payments);
 app.use("/api/v1/events", events);
 // Message routes
 app.use("/api/v1/messages", messages);
+// Quiz routes
+app.use("/api/v1/quizzes", quiz);
 app.get("/api/v1", async (req, res) => {
   const result = await pool.query("SELECT NOW()");
 
@@ -117,7 +121,7 @@ app.get("/api/v1", async (req, res) => {
       iso: now.toISOString(),
       readable: readableTime,
     },
-    
+
     client: {
       protocol: req.protocol,
       secure: req.secure,
