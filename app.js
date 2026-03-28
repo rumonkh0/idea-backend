@@ -6,7 +6,6 @@ import colors from "colors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import helmet from "helmet";
-import xss from "xss-clean";
 import rateLimit from "express-rate-limit";
 import hpp from "hpp";
 import cors from "cors";
@@ -28,8 +27,7 @@ import bkash from "./modules/payment/bkash.route.js";
 import payments from "./modules/payment/payment.route.js";
 import events from "./modules/event/event.route.js";
 import messages from "./modules/message/message.route.js";
-
-import quiz from "./modules/quiz/quiz.route.js";
+import quizzes from "./modules/quiz/quiz.route.js";
 
 // Initialize app
 const app = express();
@@ -88,7 +86,7 @@ app.use("/api/v1/events", events);
 // Message routes
 app.use("/api/v1/messages", messages);
 // Quiz routes
-app.use("/api/v1/quizzes", quiz);
+app.use("/api/v1/quizzes", quizzes);
 app.get("/api/v1", async (req, res) => {
   const result = await pool.query("SELECT NOW()");
 

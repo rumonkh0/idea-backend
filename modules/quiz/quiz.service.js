@@ -1,31 +1,73 @@
-// Quiz Service
-const prisma = require("../../config/prisma");
+import prisma from "../../config/prisma.js";
 
-module.exports = {
-  async createQuiz(data) {
-    // options should be array, correctAns should be value or index
-    return prisma.quiz.create({
-      data: { ...data, options: JSON.stringify(data.options) },
-    });
-  },
+// -- Admin Functions --
 
-  async getQuizzesByLesson(lessonId) {
-    return prisma.quiz.findMany({ where: { lessonId: Number(lessonId) } });
-  },
+export const createQuiz = async (data) => {
+  return prisma.quiz.create({
+    data,
+  });
+};
 
-  async attemptQuiz(userId, { quizId, selectedAns }) {
-    const quiz = await prisma.quiz.findUnique({ where: { id: quizId } });
-    if (!quiz) throw new Error("Quiz not found");
-    const isCorrect = quiz.correctAns === selectedAns;
-    const attempt = await prisma.quizAttempt.upsert({
-      where: { userId_quizId: { userId, quizId } },
-      update: { selectedAns, isCorrect },
-      create: { userId, quizId, selectedAns, isCorrect },
-    });
-    return { attempt, isCorrect, point: isCorrect ? quiz.point : 0 };
-  },
+export const updateQuiz = async (id, data) => {
+  return prisma.quiz.update({
+    where: { id: parseInt(id) },
+    data,
+  });
+};
 
-  async getUserQuizAttempts(userId) {
-    return prisma.quizAttempt.findMany({ where: { userId } });
-  },
+export const deleteQuiz = async (id) => {
+  return prisma.quiz.delete({
+    where: { id: parseInt(id) },
+  });
+};
+
+// -- Admin/User Functions --
+
+export const getQuizzesByLesson = async (lessonId) => {
+  return prisma.quiz.findMany({
+    where: { lessonId: parseInt(lessonId) },
+    orderBy: { videoCheckpoint: "asc" },
+  });
+};
+
+export const getQuizById = async (id) => {
+  return prisma.quiz.findUnique({
+    where: { id: parseInt(id) },
+    include: { lesson: true },
+  });
+};
+
+// -- User Functions --
+
+export const submitQuizResponse = async (userId, quizId, userAnswer) => {
+  const quiz = await prisma.quiz.findUnique({
+    where: { id: parseInt(quizId) },
+  });
+
+  if (!quiz) throw new Error("Quiz not found");
+
+  const isCorrect = quiz.correctAnswer === userAnswer;
+  const pointsEarned = isCorrect ? quiz.point : 0;
+
+  return prisma.quizResponse.create({
+    data: {
+      userId,
+      quizId: parseInt(quizId),
+      userAnswer,
+      isCorrect,
+      pointsEarned,
+    },
+  });
+};
+
+export const getUserQuizResults = async (userId) => {
+  return prisma.quizResponse.findMany({
+    where: { userId },
+    include: {
+      quiz: {
+        include: { lesson: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
 };

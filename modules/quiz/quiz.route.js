@@ -1,16 +1,28 @@
-// Quiz Routes
-const express = require("express");
+import express from "express";
+import {
+  addQuiz,
+  updateQuiz,
+  deleteQuiz,
+  getQuizzesByLesson,
+  submitQuizResponse,
+  getUserQuizResults,
+} from "./quiz.controller.js";
+import { protect, authorize } from "../../middleware/auth.js";
+
 const router = express.Router();
-const quizController = require("./quiz.controller");
-const { protect } = require("../../middleware/auth");
 
-// Create a quiz (admin/instructor)
-router.post("/", protect, quizController.createQuiz);
-// Get quizzes for a lesson
-router.get("/lesson/:lessonId", protect, quizController.getQuizzesByLesson);
-// Attempt a quiz
-router.post("/attempt", protect, quizController.attemptQuiz);
-// Get user's quiz attempts
-router.get("/attempts", protect, quizController.getUserQuizAttempts);
+// Apply protect middleware to all quiz routes
+router.use(protect);
 
-module.exports = router;
+// User/Student routes
+router.get("/lesson/:lessonId", getQuizzesByLesson);
+router.post("/:id/submit", submitQuizResponse);
+router.get("/results", getUserQuizResults);
+
+// Admin routes
+router.use(authorize("ADMIN", "SUPERADMIN"));
+router.post("/", addQuiz);
+router.put("/:id", updateQuiz);
+router.delete("/:id", deleteQuiz);
+
+export default router;
