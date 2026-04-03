@@ -62,7 +62,7 @@ model Course {
 
   // relations
   instructorId  Int?
-  instructor    User?         @relation("InstructorCourses", fields: [instructorId], references: [id])
+  instructor    User?         @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: SetNull)
 
   modules       Module[]
   enrollments   Enrollment[]
@@ -78,7 +78,7 @@ model Module {
 
   // relations
   courseId  Int
-  course    Course    @relation(fields: [courseId], references: [id])
+  course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons   Lesson[]
 }
 
@@ -95,7 +95,7 @@ model Lesson {
 
   // relations
   moduleId  Int
-  module    Module    @relation(fields: [moduleId], references: [id])
+  module    Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress  LessonProgress[] 
   quizzes   Quiz[]
 }
@@ -108,8 +108,8 @@ model Enrollment {
   // relations
   userId     Int
   courseId   Int
-  user       User             @relation(fields: [userId], references: [id])
-  course     Course           @relation(fields: [courseId], references: [id])
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
 }
@@ -122,8 +122,8 @@ model LessonProgress {
   userId      Int
   lessonId    Int
 
-  user        User    @relation(fields: [userId], references: [id])
-  lesson      Lesson  @relation(fields: [lessonId], references: [id])
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson      Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
 }
@@ -138,8 +138,8 @@ model Review {
   // relations
   userId    Int
   courseId  Int
-  user      User      @relation(fields: [userId], references: [id])
-  course    Course    @relation(fields: [courseId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
 }
@@ -189,8 +189,8 @@ model Payment {
   // relations
   userId        Int
   courseId      Int
-  user          User          @relation(fields: [userId], references: [id])
-  course        Course        @relation(fields: [courseId], references: [id])
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model BkashTransaction {
@@ -234,7 +234,7 @@ model Quiz {
   point           Int            @default(10)
   
   lessonId        Int
-  lesson          Lesson         @relation(fields: [lessonId], references: [id])
+  lesson          Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   responses       QuizResponse[]
   
   createdAt       DateTime       @default(now())
@@ -248,9 +248,9 @@ model QuizResponse {
   pointsEarned Int
   
   userId       Int
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   quizId       Int
-  quiz         Quiz     @relation(fields: [quizId], references: [id])
+  quiz         Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   
   createdAt    DateTime @default(now())
 }

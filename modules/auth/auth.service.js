@@ -106,16 +106,18 @@ export const loginUser = asyncHandler(async ({ email, password, userAgent }) => 
     },
   });
 
-  // Check active sessions count
-  const sessionCount = await prisma.session.count({
-    where: { userId: user.id },
-  });
+  // Check active sessions count (Exempt ADMIN and SUPERADMIN)
+  if (user.role !== "ADMIN" && user.role !== "SUPERADMIN") {
+    const sessionCount = await prisma.session.count({
+      where: { userId: user.id },
+    });
 
-  if (sessionCount >= 2) {
-    throw new ErrorResponse(
-      "Reached maximum device limit. Logout from another device to login.",
-      403,
-    );
+    if (sessionCount >= 2) {
+      throw new ErrorResponse(
+        "Reached maximum device limit. Logout from another device to login.",
+        403,
+      );
+    }
   }
 
   const token = generateJwt(user);
