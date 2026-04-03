@@ -71,3 +71,20 @@ export const getUserQuizResults = async (userId) => {
     orderBy: { createdAt: "desc" },
   });
 };
+
+export const getUserLessonQuizResults = async (userId, lessonId) => {
+  return prisma.quizResponse.findMany({
+    where: {
+      userId,
+      quiz: {
+        lessonId: parseInt(lessonId),
+      },
+    },
+    include: {
+      quiz: {
+        include: { lesson: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};

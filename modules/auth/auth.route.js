@@ -8,6 +8,7 @@ import {
   updateDetails,
   updatePassword,
   logout,
+  logoutOthers,
   adminGetUserSessions,
   adminGetAllSessions,
   adminDeleteSession,
@@ -37,6 +38,7 @@ router.get('/me', protect, (req, res) => {
 
 // Logout
 router.post('/logout', protect, logout);
+router.post('/logout-others', protect, logoutOthers);
 
 // Admin Session Management
 router.use('/admin/sessions', protect, authorize('ADMIN', 'SUPERADMIN'));

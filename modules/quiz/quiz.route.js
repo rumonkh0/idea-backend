@@ -6,6 +6,7 @@ import {
   getQuizzesByLesson,
   submitQuizResponse,
   getUserQuizResults,
+  getUserLessonQuizResults,
 } from "./quiz.controller.js";
 import { protect, authorize } from "../../middleware/auth.js";
 
@@ -18,6 +19,7 @@ router.use(protect);
 router.get("/lesson/:lessonId", getQuizzesByLesson);
 router.post("/:id/submit", submitQuizResponse);
 router.get("/results", getUserQuizResults);
+router.get("/results/lesson/:lessonId", getUserLessonQuizResults);
 
 // Admin routes
 router.use(authorize("ADMIN", "SUPERADMIN"));

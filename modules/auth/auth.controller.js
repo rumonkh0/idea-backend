@@ -9,6 +9,12 @@ import {
   confirmEmailService,
   updateDetailsService,
   updatePasswordService,
+  getUserSessions,
+  getAllSessions,
+  deleteSession,
+  deleteAllUserSessions,
+  logoutOtherDevices,
+  logoutService,
 } from "./auth.service.js";
 
 // Cookie + response helper
@@ -87,10 +93,8 @@ export const login = asyncHandler(async (req, res) => {
 
 // @route POST /api/v1/auth/logout
 export const logout = asyncHandler(async (req, res) => {
-  // Delete current session from DB
-  await prisma.session.delete({
-    where: { token: req.token },
-  });
+  // Delete current session from DB via service
+  await logoutService(req.token);
 
   res.cookie("token", "none", {
     expires: new Date(Date.now() + 10 * 1000),
@@ -99,6 +103,19 @@ export const logout = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
+    data: {},
+  });
+});
+
+// @desc    Logout all sessions except current one
+// @route   POST /api/v1/auth/logout-others
+// @access  Private
+export const logoutOthers = asyncHandler(async (req, res, next) => {
+  await logoutOtherDevices(req.user.id, req.token);
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out from all other devices successfully",
     data: {},
   });
 });

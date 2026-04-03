@@ -97,3 +97,18 @@ export const getUserQuizResults = asyncHandler(async (req, res, next) => {
     data: results,
   });
 });
+
+// @desc    Get user quiz results by lesson
+// @route   GET /api/v1/quizzes/results/lesson/:lessonId
+// @access  Private
+export const getUserLessonQuizResults = asyncHandler(async (req, res, next) => {
+  const results = await quizService.getUserLessonQuizResults(
+    req.user.id,
+    req.params.lessonId
+  );
+  res.status(200).json({
+    success: true,
+    count: results.length,
+    data: results,
+  });
+});

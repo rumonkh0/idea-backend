@@ -97,6 +97,15 @@ export const loginUser = asyncHandler(async ({ email, password, userAgent }) => 
     throw new ErrorResponse("Invalid credentials", 401);
   }
 
+  // --- Auto-Cleanup: Delete sessions older than 30 days (matching your JWT_EXPIRE) ---
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  await prisma.session.deleteMany({
+    where: {
+      userId: user.id,
+      createdAt: { lt: thirtyDaysAgo },
+    },
+  });
+
   // Check active sessions count
   const sessionCount = await prisma.session.count({
     where: { userId: user.id },
@@ -331,5 +340,29 @@ export const deleteSession = async (sessionId) => {
 export const deleteAllUserSessions = async (userId) => {
   return prisma.session.deleteMany({
     where: { userId: parseInt(userId) },
+  });
+};
+
+/**
+ * Logout all sessions for a user except the current one
+ * @param {number} userId 
+ * @param {string} currentToken 
+ */
+export const logoutOtherDevices = async (userId, currentToken) => {
+  return prisma.session.deleteMany({
+    where: {
+      userId: parseInt(userId),
+      token: { not: currentToken },
+    },
+  });
+};
+
+/**
+ * Logout - remove current session
+ * @param {string} token 
+ */
+export const logoutService = async (token) => {
+  return prisma.session.delete({
+    where: { token },
   });
 };
