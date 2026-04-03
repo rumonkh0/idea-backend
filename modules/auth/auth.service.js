@@ -31,9 +31,26 @@ const generateJwt = (user) => {
   });
 };
 
+// Help Create Session record
+/**
+ * @param {number} userId 
+ * @param {string} token 
+ * @param {string} [userAgent] 
+ * @returns {Promise<import(".prisma/client").Session>}
+ */
+export const createSessionRecord = async (userId, token, userAgent = "Unknown") => {
+  return prisma.session.create({
+    data: {
+      userId,
+      token,
+      userAgent
+    }
+  });
+};
+
 // Register user
 export const registerUser = asyncHandler(
-  async ({ name, email, phone, password, role }) => {
+  async ({ name, email, phone, password, role, userAgent }) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt); // Industry standard rounds
 
@@ -57,13 +74,15 @@ export const registerUser = asyncHandler(
       },
     });
 
-    // Return the raw confirmToken to be sent in the email link
-    return { user, confirmToken };
+    const token = generateJwt(user);
+    await createSessionRecord(user.id, token, userAgent);
+
+    return { user, confirmToken, token };
   },
 );
 
 // Login user
-export const loginUser = asyncHandler(async ({ email, password }) => {
+export const loginUser = asyncHandler(async ({ email, password, userAgent }) => {
   const user = await prisma.user.findUnique({
     where: { email },
   });
@@ -78,7 +97,29 @@ export const loginUser = asyncHandler(async ({ email, password }) => {
     throw new ErrorResponse("Invalid credentials", 401);
   }
 
+  // Check active sessions count
+  const sessionCount = await prisma.session.count({
+    where: { userId: user.id },
+  });
+
+  if (sessionCount >= 2) {
+    throw new ErrorResponse(
+      "Reached maximum device limit. Logout from another device to login.",
+      403,
+    );
+  }
+
   const token = generateJwt(user);
+
+  // Create new session
+  await prisma.session.create({
+    data: {
+      userId: user.id,
+      token: token,
+      userAgent: userAgent || "Unknown",
+    },
+  });
+
   return { user, token };
 });
 
@@ -107,7 +148,9 @@ export const updatePasswordService = asyncHandler(
       data: { passwordHash: hashedPassword },
     });
 
-    return generateJwt(updatedUser);
+    const token = generateJwt(updatedUser);
+    await createSessionRecord(updatedUser.id, token);
+    return token;
   },
 );
 
@@ -175,7 +218,9 @@ export const resetPasswordService = asyncHandler(async (token, newPassword) => {
     },
   });
 
-  return generateJwt(user);
+  const jwtToken = generateJwt(user);
+  await createSessionRecord(user.id, jwtToken);
+  return jwtToken;
 });
 
 // Confirm email
@@ -201,5 +246,90 @@ export const confirmEmailService = asyncHandler(async (token) => {
     },
   });
 
-  return generateJwt(user);
+  const jwtToken = generateJwt(user);
+  await createSessionRecord(user.id, jwtToken);
+  return jwtToken;
 });
+
+// -- Admin Session Management --
+
+/**
+ * Get all active sessions for a specific user
+ * @param {number} userId 
+ */
+export const getUserSessions = async (userId) => {
+  return prisma.session.findMany({
+    where: { userId: parseInt(userId) },
+    select: {
+      id: true,
+      userAgent: true,
+      token: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+/**
+ * Get all active sessions (Paginated, optional email search)
+ * @param {Object} options
+ * @param {number} options.page
+ * @param {number} options.limit
+ * @param {string} [options.email]
+ */
+export const getAllSessions = async ({ page, limit, email }) => {
+  const skip = (page - 1) * limit;
+
+  const where = {};
+  if (email) {
+    where.user = {
+      email: { contains: email, mode: "insensitive" },
+    };
+  }
+
+  const [sessions, total] = await Promise.all([
+    prisma.session.findMany({
+      where,
+      skip,
+      take: limit,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.session.count({ where }),
+  ]);
+
+  return {
+    sessions,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  };
+};
+
+/**
+ * Delete a specific session by ID
+ * @param {string} sessionId 
+ */
+export const deleteSession = async (sessionId) => {
+  return prisma.session.delete({
+    where: { id: sessionId },
+  });
+};
+
+/**
+ * Logout a user from all devices
+ * @param {number} userId 
+ */
+export const deleteAllUserSessions = async (userId) => {
+  return prisma.session.deleteMany({
+    where: { userId: parseInt(userId) },
+  });
+};

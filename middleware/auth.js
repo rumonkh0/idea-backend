@@ -29,6 +29,16 @@ export const protect = asyncHandler(async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     // console.log("Decoded JWT:", decoded);
+
+    // Check if session exists in DB
+    const session = await prisma.session.findUnique({
+      where: { token },
+    });
+
+    if (!session) {
+      return next(new ErrorResponse("Session expired or invalid", 401));
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
       select: {
@@ -45,6 +55,7 @@ export const protect = asyncHandler(async (req, res, next) => {
     }
 
     req.user = user;
+    req.token = token; // To use in logout
     next();
   } catch (err) {
     return next(new ErrorResponse("Not authorized to access this route", 401));

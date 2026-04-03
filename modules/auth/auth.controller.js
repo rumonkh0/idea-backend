@@ -48,7 +48,10 @@ const sendTokenResponse = (
 
 // @route POST /api/v1/auth/register
 export const register = asyncHandler(async (req, res) => {
-  const { user, confirmToken } = await registerUser(req.body);
+  const { user, confirmToken, token } = await registerUser({
+    ...req.body,
+    userAgent: req.headers["user-agent"],
+  });
 
   const confirmURL = `${req.protocol}://${req.get(
     "host",
@@ -65,7 +68,7 @@ export const register = asyncHandler(async (req, res) => {
   }
 
   sendTokenResponse(
-    jwt.sign({ id: user.id }, process.env.JWT_SECRET),
+    token,
     201,
     res,
     "User registered successfully",
@@ -75,8 +78,29 @@ export const register = asyncHandler(async (req, res) => {
 
 // @route POST /api/v1/auth/login
 export const login = asyncHandler(async (req, res) => {
-  const { user, token } = await loginUser(req.body);
+  const { user, token } = await loginUser({
+    ...req.body,
+    userAgent: req.headers["user-agent"],
+  });
   sendTokenResponse(token, 200, res, "Login successful", user);
+});
+
+// @route POST /api/v1/auth/logout
+export const logout = asyncHandler(async (req, res) => {
+  // Delete current session from DB
+  await prisma.session.delete({
+    where: { token: req.token },
+  });
+
+  res.cookie("token", "none", {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {},
+  });
 });
 
 // @route PUT /api/v1/auth/updatedetails
@@ -131,4 +155,58 @@ export const resetPassword = asyncHandler(async (req, res) => {
 export const confirmEmail = asyncHandler(async (req, res) => {
   const token = await confirmEmailService(req.query.token);
   sendTokenResponse(token, 200, res, "Email confirmed successfully");
+});
+
+// -- Admin Session Controllers --
+
+// @desc    Get all active sessions for a user
+// @route   GET /api/v1/auth/admin/sessions/:userId
+// @access  Private/Admin
+export const adminGetUserSessions = asyncHandler(async (req, res, next) => {
+  const sessions = await getUserSessions(req.params.userId);
+  res.status(200).json({
+    success: true,
+    count: sessions.length,
+    data: sessions,
+  });
+});
+
+// @desc    Get all active sessions across all users (Paginated)
+// @route   GET /api/v1/auth/admin/sessions
+// @access  Private/Admin
+export const adminGetAllSessions = asyncHandler(async (req, res, next) => {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const email = req.query.email;
+
+  const result = await getAllSessions({ page, limit, email });
+
+  res.status(200).json({
+    success: true,
+    ...result,
+  });
+});
+
+// @desc    Delete a specific session
+// @route   DELETE /api/v1/auth/admin/sessions/:sessionId
+// @access  Private/Admin
+export const adminDeleteSession = asyncHandler(async (req, res, next) => {
+  await deleteSession(req.params.sessionId);
+  res.status(200).json({
+    success: true,
+    message: "Session deleted successfully",
+    data: null,
+  });
+});
+
+// @desc    Logout a user from all devices
+// @route   DELETE /api/v1/auth/admin/sessions/user/:userId
+// @access  Private/Admin
+export const adminLogoutAllDevices = asyncHandler(async (req, res, next) => {
+  await deleteAllUserSessions(req.params.userId);
+  res.status(200).json({
+    success: true,
+    message: "User logged out from all devices",
+    data: null,
+  });
 });

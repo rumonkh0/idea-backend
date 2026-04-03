@@ -7,9 +7,14 @@ import {
   confirmEmail,
   updateDetails,
   updatePassword,
+  logout,
+  adminGetUserSessions,
+  adminGetAllSessions,
+  adminDeleteSession,
+  adminLogoutAllDevices,
 } from './auth.controller.js';
 
-import { protect } from '../../middleware/auth.js';
+import { protect, authorize } from '../../middleware/auth.js';
 
 const router = express.Router();
 
@@ -31,16 +36,13 @@ router.get('/me', protect, (req, res) => {
 });
 
 // Logout
-router.post('/logout', (req, res) => {
-  res.cookie('token', 'none', {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
-  });
+router.post('/logout', protect, logout);
 
-  res.status(200).json({
-    success: true,
-    data: {},
-  });
-});
+// Admin Session Management
+router.use('/admin/sessions', protect, authorize('ADMIN', 'SUPERADMIN'));
+router.get('/admin/sessions', adminGetAllSessions);
+router.get('/admin/sessions/:userId', adminGetUserSessions);
+router.delete('/admin/sessions/:sessionId', adminDeleteSession);
+router.delete('/admin/sessions/user/:userId', adminLogoutAllDevices);
 
 export default router;
