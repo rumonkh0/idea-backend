@@ -1,5 +1,6 @@
 import prisma from "../../config/prisma.js";
 import fs from "fs";
+import path from "path";
 import { getVideoDuration } from "../../utils/videoUtils.js";
 
 const getBunnyConfig = () => {
@@ -85,22 +86,115 @@ export const uploadLessonVideoToBunny = async ({
 };
 
 // COURSE CRUD
+
+const getMediaType = (mimeType) => {
+  if (!mimeType) return "FILE";
+  if (mimeType.startsWith("image/")) return "IMAGE";
+  if (mimeType.startsWith("video/")) return "VIDEO";
+  return "FILE";
+};
+
+const deleteFileIfExists = async (filePath) => {
+  try {
+    await fs.promises.unlink(filePath);
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+  }
+};
+
+const deleteMediaFile = async (media) => {
+  if (!media?.url) return;
+  const publicRoot = path.join(process.cwd(), "public");
+  await deleteFileIfExists(path.join(publicRoot, media.url));
+};
+
+export const createThumbnailMedia = async (file) => {
+  const url = `/uploads/course/${file.filename}`;
+  return prisma.media.create({
+    data: {
+      url,
+      type: getMediaType(file.mimetype),
+      provider: "local",
+      alt: file.originalname,
+      size: file.size,
+      mimeType: file.mimetype,
+    },
+  });
+};
+
 export const createCourse = async (data) => {
-  return prisma.course.create({ data });
+  const { thumbnailId, ...rest } = data;
+  return prisma.course.create({
+    data: {
+      ...rest,
+      ...(thumbnailId
+        ? { thumbnailMedia: { connect: { id: thumbnailId } } }
+        : {}),
+    },
+    include: { thumbnailMedia: true },
+  });
 };
 
 export const updateCourse = async (id, data) => {
-  return prisma.course.update({ where: { id }, data });
+  const { thumbnailId, ...rest } = data;
+
+  // If a new thumbnail is being set, clean up the old one
+  if (thumbnailId) {
+    const existing = await prisma.course.findUnique({
+      where: { id },
+      include: { thumbnailMedia: true },
+    });
+
+    if (existing?.thumbnailMedia) {
+      // Disconnect + delete old media
+      await prisma.course.update({
+        where: { id },
+        data: { thumbnailMedia: { disconnect: true } },
+      });
+      await deleteMediaFile(existing.thumbnailMedia);
+      await prisma.media.delete({
+        where: { id: existing.thumbnailMedia.id },
+      });
+    }
+  }
+
+  return prisma.course.update({
+    where: { id },
+    data: {
+      ...rest,
+      ...(thumbnailId
+        ? { thumbnailMedia: { connect: { id: thumbnailId } } }
+        : {}),
+    },
+    include: { thumbnailMedia: true },
+  });
 };
 
 export const deleteCourse = async (id) => {
-  return prisma.course.delete({ where: { id } });
+  const course = await prisma.course.findUnique({
+    where: { id },
+    include: { thumbnailMedia: true },
+  });
+  if (!course) return null;
+
+  await prisma.course.delete({ where: { id } });
+
+  // Clean up thumbnail media
+  if (course.thumbnailMedia) {
+    await deleteMediaFile(course.thumbnailMedia);
+    await prisma.media
+      .delete({ where: { id: course.thumbnailMedia.id } })
+      .catch(() => null);
+  }
+
+  return course;
 };
 
 export const getCourseWithModulesAndLessons = async (id) => {
   return prisma.course.findUnique({
     where: { id },
     include: {
+      thumbnailMedia: true,
       modules: {
         include: {
           lessons: true,
@@ -113,6 +207,7 @@ export const getCourseWithModulesAndLessons = async (id) => {
 export const getAllCourses = async () => {
   return prisma.course.findMany({
     include: {
+      thumbnailMedia: true,
       modules: {
         include: {
           lessons: true,

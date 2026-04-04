@@ -26,6 +26,8 @@ const router = express.Router();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// ── Lesson video upload config ──
 const lessonUploadDir = path.join(__dirname, "../../tmp/lesson-videos");
 
 if (!fs.existsSync(lessonUploadDir)) {
@@ -49,6 +51,32 @@ const lessonStorage = multer.diskStorage({
 const lessonUpload = multer({
   storage: lessonStorage,
   limits: { fileSize: 2 * 1024 * 1024 * 1024 },
+});
+
+// ── Course thumbnail upload config ──
+const thumbnailUploadDir = path.join(__dirname, "../../public/uploads/course");
+
+if (!fs.existsSync(thumbnailUploadDir)) {
+  fs.mkdirSync(thumbnailUploadDir, { recursive: true });
+}
+
+const thumbnailStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(thumbnailUploadDir)) {
+      fs.mkdirSync(thumbnailUploadDir, { recursive: true });
+    }
+    cb(null, thumbnailUploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, name);
+  },
+});
+
+const thumbnailUpload = multer({
+  storage: thumbnailStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 /* ===========================
@@ -75,8 +103,8 @@ router.get("/:id", getCourse);
 router.use(protect, authorize("ADMIN", "SUPERADMIN"));
 
 // Course routes
-router.post("/", addCourse);
-router.put("/:id", editCourse);
+router.post("/", thumbnailUpload.single("thumbnail"), addCourse);
+router.put("/:id", thumbnailUpload.single("thumbnail"), editCourse);
 router.delete("/:id", removeCourse);
 router.get("/user/:userId/", getCoursesofUser);
 

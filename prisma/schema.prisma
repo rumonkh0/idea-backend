@@ -51,6 +51,8 @@ model Course {
   title         String
   description   String
   thumbnail     String?
+  thumbnailId   Int?         @unique
+  thumbnailMedia Media?      @relation("CourseThumbnail", fields: [thumbnailId], references: [id])
   duration      Int?
   level         CourseLevel
   language      String
@@ -171,8 +173,9 @@ model Media {
   size      Int?
   mimeType  String?
 
-  coveredBlogs  Blog[] @relation("BlogCover")   
-  galleryBlogs  Blog[] @relation("BlogGallery")
+  coveredBlogs    Blog[]  @relation("BlogCover")   
+  galleryBlogs    Blog[]  @relation("BlogGallery")
+  courseThumbnail Course? @relation("CourseThumbnail")
 
   createdAt DateTime  @default(now())
 }

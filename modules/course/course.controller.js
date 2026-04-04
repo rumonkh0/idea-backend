@@ -18,11 +18,33 @@ import {
   deleteLesson,
   completeLesson,
   uploadLessonVideoToBunny,
+  createThumbnailMedia,
 } from "./course.service.js";
 
 // COURSE
 export const addCourse = asyncHandler(async (req, res, next) => {
-  const course = await createCourse(req.body);
+  const courseData = { ...req.body };
+
+  // Parse numeric fields from form-data strings
+  if (courseData.duration) courseData.duration = Number(courseData.duration);
+  if (courseData.instructorId) courseData.instructorId = Number(courseData.instructorId);
+
+
+  if (req.file) {
+    if (!req.file.mimetype.startsWith("image/")) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({
+        success: false,
+        message: "Please upload an image file for thumbnail",
+      });
+    }
+
+    const media = await createThumbnailMedia(req.file);
+    courseData.thumbnailId = media.id;
+    courseData.thumbnail = media.url;
+  }
+
+  const course = await createCourse(courseData);
   res.status(201).json({
     success: true,
     message: "Course created successfully",
@@ -31,7 +53,28 @@ export const addCourse = asyncHandler(async (req, res, next) => {
 });
 
 export const editCourse = asyncHandler(async (req, res, next) => {
-  const course = await updateCourse(Number(req.params.id), req.body);
+  const courseData = { ...req.body };
+
+  // Parse numeric fields from form-data strings
+  if (courseData.duration) courseData.duration = Number(courseData.duration);
+  if (courseData.instructorId) courseData.instructorId = Number(courseData.instructorId);
+
+
+  if (req.file) {
+    if (!req.file.mimetype.startsWith("image/")) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({
+        success: false,
+        message: "Please upload an image file for thumbnail",
+      });
+    }
+
+    const media = await createThumbnailMedia(req.file);
+    courseData.thumbnailId = media.id;
+    courseData.thumbnail = media.url;
+  }
+
+  const course = await updateCourse(Number(req.params.id), courseData);
   res.status(200).json({
     success: true,
     message: "Course updated successfully",
