@@ -21,6 +21,7 @@ import {
   getMySingleCourse,
 } from "./course.controller.js";
 import { authorize, protect } from "../../middleware/auth.js";
+import imageProcess from "../../middleware/imageProcess.js";
 
 const router = express.Router();
 
@@ -103,8 +104,8 @@ router.get("/:id", getCourse);
 router.use(protect, authorize("ADMIN", "SUPERADMIN"));
 
 // Course routes
-router.post("/", thumbnailUpload.single("thumbnail"), addCourse);
-router.put("/:id", thumbnailUpload.single("thumbnail"), editCourse);
+router.post("/", thumbnailUpload.single("thumbnail"), imageProcess, addCourse);
+router.put("/:id", thumbnailUpload.single("thumbnail"), imageProcess, editCourse);
 router.delete("/:id", removeCourse);
 router.get("/user/:userId/", getCoursesofUser);
 

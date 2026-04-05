@@ -15,6 +15,7 @@ import {
   getPublishedBlogBySlug,
 } from "./blog.controller.js";
 import { protect, authorize } from "../../middleware/auth.js";
+import imageProcess from "../../middleware/imageProcess.js";
 
 const router = express.Router();
 
@@ -54,8 +55,8 @@ router.get("/slug/:slug", getPublishedBlogBySlug);
 
 // Admin routes
 router.use(protect, authorize("ADMIN", "SUPERADMIN"));
-router.post("/", blogUpload, addBlog);
-router.put("/:id", blogUpload, editBlog);
+router.post("/", blogUpload, imageProcess, addBlog);
+router.put("/:id", blogUpload, imageProcess, editBlog);
 router.delete("/:id", deleteBlog);
 router.delete("/:id/gallery/:mediaId", removeGalleryImage);
 router.patch("/:id/publish", publishBlog);
