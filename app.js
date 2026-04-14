@@ -107,7 +107,7 @@ app.get("/api/v1", async (req, res) => {
     success: true,
     status: "active",
     code: 200,
-    message: "✨ Welcome to Idea Learning — Empowering Intelligent Growth.",
+    message: "✨ Welcome to Idea Learning — Empowering Intelligent Growth. deployed successfully! ✨ with CI/CD pipeline",
 
     platform: {
       name: "Idea Learning",

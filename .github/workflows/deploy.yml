@@ -1,0 +1,40 @@
+name: Deploy Backend (Node v22)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          script: |
+            # Go to project folder
+            cd ~/api || exit 1
+
+            # Pull latest code
+            git pull origin main
+
+            # Use Node v22
+            export PATH=/usr/local/apps/nodejs22/bin:$PATH
+
+            # Verify (debug)
+            node -v
+            npm -v
+
+            # Install dependencies
+            npm install
+
+            # Prisma (if you use it)
+            npx prisma generate
+            npx prisma migrate deploy
+
+            # Restart app (choose ONE option below)
+            touch tmp/restart.txt
