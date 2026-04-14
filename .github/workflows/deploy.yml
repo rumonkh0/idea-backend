@@ -17,7 +17,7 @@ jobs:
           password: ${{ secrets.PASS }}
           script: |
             # Go to project folder
-            cd ~/api || exit 1
+            cd ~/public_html/api || exit 1
 
             # Pull latest code
             git pull origin main
