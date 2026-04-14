@@ -190,6 +190,10 @@ export const deleteCourse = async (id) => {
   return course;
 };
 
+export const getCourseById = async (id) => {
+  return prisma.course.findUnique({ where: { id: Number(id) } });
+};
+
 export const getCourseWithModulesAndLessons = async (id) => {
   return prisma.course.findUnique({
     where: { id },
@@ -516,5 +520,23 @@ export const completeLesson = async (userId, lessonId) => {
     where: { userId_lessonId: { userId, lessonId } },
     update: { isCompleted: true, completedAt: new Date() },
     create: { userId, lessonId, isCompleted: true, completedAt: new Date() },
+  });
+};
+// Fetch all users enrolled in a specific course
+export const getEnrolledUsersByCourseId = async (courseId) => {
+  return prisma.enrollment.findMany({
+    where: { courseId: Number(courseId) },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          role: true,
+          createdAt: true,
+        },
+      },
+    },
   });
 };

@@ -16,9 +16,10 @@ import {
   createLesson,
   updateLesson,
   deleteLesson,
-  completeLesson,
   uploadLessonVideoToBunny,
   createThumbnailMedia,
+  getEnrolledUsersByCourseId,
+  getCourseById,
 } from "./course.service.js";
 
 // COURSE
@@ -249,6 +250,30 @@ export const getMySingleCourse = asyncHandler(async (req, res, next) => {
     success: true,
     message: "Course retrieved successfully",
     data: enrollment.course,
+  });
+});
+
+// ADMIN: Get all users enrolled in a specific course
+export const getCourseEnrolledUsers = asyncHandler(async (req, res, next) => {
+  const courseId = Number(req.params.id);
+
+  // Check if course exists
+  const course = await getCourseById(courseId);
+  if (!course) {
+    return res.status(404).json({
+      success: false,
+      message: "Course not found",
+      data: null,
+    });
+  }
+
+  const users = await getEnrolledUsersByCourseId(courseId);
+
+  res.status(200).json({
+    success: true,
+    message: "Enrolled users retrieved successfully",
+    count: users.length,
+    data: users,
   });
 });
 

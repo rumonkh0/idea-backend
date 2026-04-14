@@ -19,6 +19,7 @@ import {
   getCoursesofUser,
   getMyCourses,
   getMySingleCourse,
+  getCourseEnrolledUsers,
 } from "./course.controller.js";
 import { authorize, protect } from "../../middleware/auth.js";
 import imageProcess from "../../middleware/imageProcess.js";
@@ -106,6 +107,7 @@ router.use(protect, authorize("ADMIN", "SUPERADMIN"));
 // Course routes
 router.post("/", thumbnailUpload.single("thumbnail"), imageProcess, addCourse);
 router.put("/:id", thumbnailUpload.single("thumbnail"), imageProcess, editCourse);
+router.get("/:id/enrolled-users", getCourseEnrolledUsers);
 router.delete("/:id", removeCourse);
 router.get("/user/:userId/", getCoursesofUser);
 
