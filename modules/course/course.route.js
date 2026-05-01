@@ -20,7 +20,9 @@ import {
   getMyCourses,
   getMySingleCourse,
   getCourseEnrolledUsers,
+  getMyCoursesWithProgress,
 } from "./course.controller.js";
+
 import { authorize, protect } from "../../middleware/auth.js";
 import imageProcess from "../../middleware/imageProcess.js";
 
@@ -86,7 +88,9 @@ const thumbnailUpload = multer({
 =========================== */
 
 router.get("/me", protect, getMyCourses);
+router.get("/me/progress", protect, getMyCoursesWithProgress);
 router.get("/:id/me", protect, getMySingleCourse);
+
 
 // Lesson progress
 router.post("/lesson/complete/:lessonId", protect, completeLessonController);

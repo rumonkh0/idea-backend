@@ -28,6 +28,8 @@ import payments from "./modules/payment/payment.route.js";
 import events from "./modules/event/event.route.js";
 import messages from "./modules/message/message.route.js";
 import quizzes from "./modules/quiz/quiz.route.js";
+import certificates from "./modules/certificate/certificate.route.js";
+
 
 // Initialize app
 const app = express();
@@ -87,6 +89,9 @@ app.use("/api/v1/events", events);
 app.use("/api/v1/messages", messages);
 // Quiz routes
 app.use("/api/v1/quizzes", quizzes);
+// Certificate routes
+app.use("/api/v1/certificates", certificates);
+
 app.get("/api/v1", async (req, res) => {
   const result = await pool.query("SELECT NOW()");
 
@@ -127,7 +132,7 @@ app.get("/api/v1", async (req, res) => {
 
     links: {
       documentation:
-        "https://documenter.getpostman.com/view/51096995/2sBXikpWzC",
+        "https://documenter.getpostman.com/view/51096995/2sBXionVdM",
     },
   });
 });

@@ -442,6 +442,76 @@ export const getUserEnrolledCourses = async (userId) => {
   return enriched;
 };
 
+// USER COURSES with Progress Percentage
+export const getUserEnrolledCoursesWithProgress = async (userId) => {
+  const numericUserId = Number(userId);
+
+  // 1. Fetch enrollments with course details
+  const enrollments = await prisma.enrollment.findMany({
+    where: { userId: numericUserId },
+    include: {
+      course: {
+        include: {
+          _count: {
+            select: {
+              modules: true,
+            },
+          },
+          instructor: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // 2. Fetch all lesson counts and progress for these courses
+  const enriched = await Promise.all(
+    enrollments.map(async (enrollment) => {
+      const courseId = enrollment.courseId;
+
+      // Get total lessons in course
+      const totalLessons = await prisma.lesson.count({
+        where: {
+          module: {
+            courseId: courseId,
+          },
+        },
+      });
+
+      // Get completed lessons for user in this course
+      const completedLessons = await prisma.lessonProgress.count({
+        where: {
+          userId: numericUserId,
+          isCompleted: true,
+          lesson: {
+            module: {
+              courseId: courseId,
+            },
+          },
+        },
+      });
+
+      const progressPercent =
+        totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+
+      return {
+        ...enrollment,
+        totalLessons,
+        completedLessons,
+        progressPercent: Math.round(progressPercent),
+      };
+    }),
+  );
+
+  return enriched;
+};
+
+
 // Get a single enrollment by user and course (used for "my" single course view)
 export const getUserEnrollment = async (userId, courseId) => {
   const enrollment = await prisma.enrollment.findFirst({
@@ -516,12 +586,62 @@ export const getLessonProgressForUser = async (userId, lessonIds) => {
 
 // LESSON PROGRESS
 export const completeLesson = async (userId, lessonId) => {
-  return prisma.lessonProgress.upsert({
+  const progress = await prisma.lessonProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
     update: { isCompleted: true, completedAt: new Date() },
     create: { userId, lessonId, isCompleted: true, completedAt: new Date() },
+    include: {
+      lesson: {
+        include: {
+          module: true,
+        },
+      },
+    },
   });
+
+  // Check if course is now fully completed
+  const courseId = progress.lesson.module.courseId;
+
+  // Get total lessons in course
+  const totalLessonsCount = await prisma.lesson.count({
+    where: {
+      module: {
+        courseId: courseId,
+      },
+    },
+  });
+
+  // Get completed lessons for user in this course
+  const completedLessonsCount = await prisma.lessonProgress.count({
+    where: {
+      userId,
+      isCompleted: true,
+      lesson: {
+        module: {
+          courseId: courseId,
+        },
+      },
+    },
+  });
+
+  // If all lessons are completed, update enrollment status
+  if (totalLessonsCount > 0 && totalLessonsCount === completedLessonsCount) {
+    await prisma.enrollment.update({
+      where: {
+        userId_courseId: {
+          userId,
+          courseId,
+        },
+      },
+      data: {
+        status: "COMPLETED",
+      },
+    });
+  }
+
+  return progress;
 };
+
 // Fetch all users enrolled in a specific course
 export const getEnrolledUsersByCourseId = async (courseId) => {
   return prisma.enrollment.findMany({

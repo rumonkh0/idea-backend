@@ -20,7 +20,9 @@ import {
   createThumbnailMedia,
   getEnrolledUsersByCourseId,
   getCourseById,
+  getUserEnrolledCoursesWithProgress,
 } from "./course.service.js";
+
 
 // COURSE
 export const addCourse = asyncHandler(async (req, res, next) => {
@@ -230,6 +232,20 @@ export const getMyCourses = asyncHandler(async (req, res, next) => {
     data: enrollments,
   });
 });
+
+// STUDENT: Get current user's enrolled courses with progress percentage
+export const getMyCoursesWithProgress = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const enrollments = await getUserEnrolledCoursesWithProgress(userId);
+
+  res.status(200).json({
+    success: true,
+    message: "My courses with progress retrieved successfully",
+    count: enrollments.length,
+    data: enrollments,
+  });
+});
+
 
 // STUDENT: Get a single course (only if the current user is enrolled)
 export const getMySingleCourse = asyncHandler(async (req, res, next) => {
