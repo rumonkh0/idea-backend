@@ -9,7 +9,7 @@ import ErrorResponse from "../../utils/errorResponse.js";
  * @access  Private
  */
 export const generateCertificate = asyncHandler(async (req, res, next) => {
-  const { courseId } = req.body;
+  const { courseId } = req.params;
 
   if (!courseId) {
     return next(new ErrorResponse("Please provide courseId", 400));

@@ -21,6 +21,7 @@ import {
   getEnrolledUsersByCourseId,
   getCourseById,
   getUserEnrolledCoursesWithProgress,
+  completeLesson,
 } from "./course.service.js";
 
 

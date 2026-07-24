@@ -144,9 +144,9 @@ export const updatePassword = asyncHandler(async (req, res) => {
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { user, resetToken } = await forgotPasswordService(req.body.email);
 
-  const resetURL = `${req.protocol}://${req.get(
-    "host",
-  )}/api/v1/auth/resetpassword/${resetToken}`;
+  const resetURL = req.body.host
+    ? `${req.body.host}${resetToken}`
+    : `${req.protocol}://${req.get("host")}/api/v1/auth/resetpassword/${resetToken}`;
 
   await sendEmail({
     email: user.email,

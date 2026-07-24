@@ -4,7 +4,7 @@ import { protect } from "../../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/generate", protect, generateCertificate);
+router.get("/generate/:courseId", protect, generateCertificate);
 
 
 export default router;
