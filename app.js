@@ -57,6 +57,7 @@ app.use(
 //   app.use(xss());
 
 // Rate limiting
+app.set("trust proxy", 1);
 const limiter = rateLimit({
   windowMs: 3 * 60 * 1000, // 3 mins
   max: 100,

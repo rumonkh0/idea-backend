@@ -12,6 +12,8 @@ const getBunnyConfig = () => {
     throw new Error("Bunny Stream configuration missing");
   }
 
+  console.log(`Bunny Config: Library ${libraryId}, Key ${accessKey.substring(0, 5)}...${accessKey.slice(-3)}, Host ${hostname}`);
+
   return { libraryId, accessKey, hostname };
 };
 
@@ -23,24 +25,45 @@ export const uploadLessonVideoToBunny = async ({
   const { libraryId, accessKey, hostname } = getBunnyConfig();
   await fs.promises.access(filePath, fs.constants.R_OK);
 
-  // Extract duration if it's a video
   let duration = null;
   if (mimeType && mimeType.startsWith("video/")) {
-    duration = await getVideoDuration(filePath);
+    try {
+      duration = await getVideoDuration(filePath);
+    } catch (err) {
+      console.warn(`[WARN] Could not get video duration (missing ffmpeg?): ${err.message}`);
+      // Default to 0 or null if we can't extract duration
+      duration = 0;
+    }
   }
 
-  const createRes = await fetch(
-    `https://video.bunnycdn.com/library/${libraryId}/videos`,
-    {
-      method: "POST",
-      headers: {
-        AccessKey: accessKey,
-        accept: "application/json",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ title }),
-    },
-  );
+  let createRes;
+  try {
+    createRes = await fetch(
+      `https://video.bunnycdn.com/library/${libraryId}/videos`,
+      {
+        method: "POST",
+        headers: {
+          AccessKey: accessKey,
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ title }),
+      }
+    );
+  } catch (err) {
+    console.error("\n=== DETAILED FETCH ERROR ===");
+    console.error("Message:", err.message);
+    if (err.cause) {
+      console.error("Cause message:", err.cause.message);
+      console.error("Cause code:", err.cause.code);
+      console.error("Cause stack:", err.cause.stack);
+      console.error(err.cause);
+
+    }
+    console.error("Full Error:", err);
+    console.error("============================\n");
+    throw err;
+  }
 
   if (!createRes.ok) {
     const errorText = await createRes.text();

@@ -4,3 +4,4 @@ config/config.env
 .qodo
 
 /generated/prisma
+.env
