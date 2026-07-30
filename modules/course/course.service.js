@@ -76,27 +76,32 @@ export const uploadLessonVideoToBunny = async ({
     throw new Error("Bunny create video failed: missing video id");
   }
 
-  const stream = fs.createReadStream(filePath);
-  const uploadRes = await fetch(
-    `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`,
-    {
-      method: "PUT",
-      duplex: "half",
-      headers: {
-        AccessKey: accessKey,
-        accept: "application/json",
-        "content-type": mimeType || "application/octet-stream",
+  try {
+    const stream = fs.createReadStream(filePath);
+    const uploadRes = await fetch(
+      `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`,
+      {
+        method: "PUT",
+        duplex: "half",
+        headers: {
+          AccessKey: accessKey,
+          accept: "application/json",
+          "content-type": mimeType || "application/octet-stream",
+        },
+        body: stream,
       },
-      body: stream,
-    },
-  );
+    );
 
-  if (!uploadRes.ok) {
-    const errorText = await uploadRes.text();
-    throw new Error(`Bunny upload failed: ${errorText}`);
+    if (!uploadRes.ok) {
+      const errorText = await uploadRes.text();
+      throw new Error(`Bunny upload failed: ${errorText}`);
+    }
+  } catch (err) {
+    await deleteBunnyVideo(videoId, libraryId);
+    throw err;
+  } finally {
+    await fs.promises.unlink(filePath).catch(() => null);
   }
-
-  await fs.promises.unlink(filePath).catch(() => null);
 
   const videoUrl = `https://${hostname}/${videoId}/playlist.m3u8`;
 
@@ -106,6 +111,34 @@ export const uploadLessonVideoToBunny = async ({
     videoUrl,
     duration,
   };
+};
+
+export const deleteBunnyVideo = async (videoId, customLibraryId = null) => {
+  if (!videoId) return;
+  try {
+    const { libraryId: defaultLibId, accessKey } = getBunnyConfig();
+    const libId = customLibraryId || defaultLibId;
+
+    const res = await fetch(
+      `https://video.bunnycdn.com/library/${libId}/videos/${videoId}`,
+      {
+        method: "DELETE",
+        headers: {
+          AccessKey: accessKey,
+          accept: "application/json",
+        },
+      },
+    );
+
+    if (!res.ok && res.status !== 404) {
+      const errorText = await res.text();
+      console.error(`Failed to delete Bunny video ${videoId}: ${errorText}`);
+    } else {
+      console.log(`Successfully deleted Bunny video ${videoId}`);
+    }
+  } catch (error) {
+    console.error(`Error deleting Bunny video ${videoId}:`, error.message);
+  }
 };
 
 // COURSE CRUD
@@ -196,7 +229,14 @@ export const updateCourse = async (id, data) => {
 export const deleteCourse = async (id) => {
   const course = await prisma.course.findUnique({
     where: { id },
-    include: { thumbnailMedia: true },
+    include: {
+      thumbnailMedia: true,
+      modules: {
+        include: {
+          lessons: { select: { video_id: true, library_id: true } },
+        },
+      },
+    },
   });
   if (!course) return null;
 
@@ -208,6 +248,19 @@ export const deleteCourse = async (id) => {
     await prisma.media
       .delete({ where: { id: course.thumbnailMedia.id } })
       .catch(() => null);
+  }
+
+  // Clean up all lesson videos from Bunny Stream
+  if (course.modules) {
+    for (const mod of course.modules) {
+      if (mod.lessons) {
+        for (const lesson of mod.lessons) {
+          if (lesson.video_id) {
+            await deleteBunnyVideo(lesson.video_id, lesson.library_id);
+          }
+        }
+      }
+    }
   }
 
   return course;
@@ -353,7 +406,25 @@ export const updateModule = async (id, data) => {
 };
 
 export const deleteModule = async (id) => {
-  return prisma.module.delete({ where: { id } });
+  const mod = await prisma.module.findUnique({
+    where: { id },
+    include: {
+      lessons: { select: { video_id: true, library_id: true } },
+    },
+  });
+  if (!mod) return null;
+
+  const deleted = await prisma.module.delete({ where: { id } });
+
+  if (mod.lessons) {
+    for (const lesson of mod.lessons) {
+      if (lesson.video_id) {
+        await deleteBunnyVideo(lesson.video_id, lesson.library_id);
+      }
+    }
+  }
+
+  return deleted;
 };
 
 // LESSON CRUD
@@ -385,11 +456,32 @@ export const createLesson = async (moduleId, data) => {
 };
 
 export const updateLesson = async (id, data) => {
+  if (data.video_id) {
+    const existing = await prisma.lesson.findUnique({
+      where: { id },
+      select: { video_id: true, library_id: true },
+    });
+    if (existing?.video_id && existing.video_id !== data.video_id) {
+      await deleteBunnyVideo(existing.video_id, existing.library_id);
+    }
+  }
   return prisma.lesson.update({ where: { id }, data });
 };
 
 export const deleteLesson = async (id) => {
-  return prisma.lesson.delete({ where: { id } });
+  const lesson = await prisma.lesson.findUnique({
+    where: { id },
+    select: { id: true, video_id: true, library_id: true },
+  });
+  if (!lesson) return null;
+
+  await prisma.lesson.delete({ where: { id } });
+
+  if (lesson.video_id) {
+    await deleteBunnyVideo(lesson.video_id, lesson.library_id);
+  }
+
+  return lesson;
 };
 
 // USER COURSES (enrolled)
