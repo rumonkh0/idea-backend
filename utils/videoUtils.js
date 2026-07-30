@@ -1,3 +1,4 @@
+import ffprobeStatic from "ffprobe-static";
 import { execFile } from "child_process";
 import { promisify } from "util";
 
@@ -11,7 +12,7 @@ const execFilePromise = promisify(execFile);
  */
 export const getVideoDuration = async (filePath) => {
   try {
-    const { stdout } = await execFilePromise("ffprobe", [
+    const { stdout } = await execFilePromise(ffprobeStatic.path, [
       "-v",
       "error",
       "-show_entries",
