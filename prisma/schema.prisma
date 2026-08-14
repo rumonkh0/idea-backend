@@ -147,20 +147,52 @@ model Review {
 }
 
 model Blog {
-  id          Int      @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   title       String
-  slug        String   @unique
-  description String   @db.Text
-  published   Boolean  @default(false)
+  slug        String         @unique
+  description String         @db.Text
+  published   Boolean        @default(false)
 
   coverImageId Int?
-  coverImage   Media?   @relation("BlogCover", fields: [coverImageId], references: [id])
+  coverImage   Media?        @relation("BlogCover", fields: [coverImageId], references: [id])
 
-  // 2. You MUST add "BlogGallery" here to match Media
-  gallery      Media[]  @relation("BlogGallery")
+  gallery      Media[]       @relation("BlogGallery")
+  activities   BlogActivity[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model BlogActivity {
+  id          Int                 @id @default(autoincrement())
+  title       String
+  description String              @db.Text
+  sortOrder   Int                 @default(0)
+
+  blogId      Int
+  blog        Blog                @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  images      BlogActivityImage[]
+
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([blogId, sortOrder])
+}
+
+model BlogActivityImage {
+  id          Int          @id @default(autoincrement())
+  sortOrder   Int          @default(0)
+
+  activityId  Int
+  activity    BlogActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  mediaId     Int
+  media       Media        @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+
+  @@index([activityId, sortOrder])
 }
 
 model Media {
@@ -173,9 +205,10 @@ model Media {
   size      Int?
   mimeType  String?
 
-  coveredBlogs    Blog[]  @relation("BlogCover")   
-  galleryBlogs    Blog[]  @relation("BlogGallery")
-  courseThumbnail Course? @relation("CourseThumbnail")
+  coveredBlogs    Blog[]              @relation("BlogCover")   
+  galleryBlogs    Blog[]              @relation("BlogGallery")
+  courseThumbnail Course?             @relation("CourseThumbnail")
+  activityImages  BlogActivityImage[]
 
   createdAt DateTime  @default(now())
 }

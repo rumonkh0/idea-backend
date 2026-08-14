@@ -43,10 +43,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-const blogUpload = upload.fields([
-  { name: "coverImage", maxCount: 1 },
-  { name: "gallery", maxCount: 10 },
-]);
+const blogUpload = upload.any();
 
 // User routes
 router.get("/", getPublishedBlogs);

@@ -13,23 +13,32 @@ const imageProcess = asyncHandler(async (req, res, next) => {
 
   // Handle multiple files or fields
   if (req.files) {
-    const fileKeys = Object.keys(req.files);
-    for (const key of fileKeys) {
-      const files = req.files[key];
-      if (Array.isArray(files)) {
-        // Handle array of files
-        const processedFiles = await Promise.all(
-          files.map(async (file) => {
-            if (file.mimetype.startsWith("image/")) {
-              return await convertToWebP(file);
-            }
-            return file;
-          })
-        );
-        req.files[key] = processedFiles;
-      } else if (typeof files === "object" && files.mimetype.startsWith("image/")) {
-        // Handle single file object in req.files (less common but possible)
-        req.files[key] = await convertToWebP(files);
+    if (Array.isArray(req.files)) {
+      req.files = await Promise.all(
+        req.files.map(async (file) => {
+          if (file && file.mimetype && file.mimetype.startsWith("image/")) {
+            return await convertToWebP(file);
+          }
+          return file;
+        })
+      );
+    } else {
+      const fileKeys = Object.keys(req.files);
+      for (const key of fileKeys) {
+        const files = req.files[key];
+        if (Array.isArray(files)) {
+          const processedFiles = await Promise.all(
+            files.map(async (file) => {
+              if (file && file.mimetype && file.mimetype.startsWith("image/")) {
+                return await convertToWebP(file);
+              }
+              return file;
+            })
+          );
+          req.files[key] = processedFiles;
+        } else if (files && typeof files === "object" && files.mimetype?.startsWith("image/")) {
+          req.files[key] = await convertToWebP(files);
+        }
       }
     }
   }

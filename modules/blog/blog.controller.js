@@ -19,6 +19,127 @@ const buildBlogPayload = (body) => {
   return payload;
 };
 
+const parseNumberArray = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map(Number).filter(Boolean);
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.map(Number).filter(Boolean);
+    } catch {}
+    return value.split(",").map((v) => Number(v.trim())).filter(Boolean);
+  }
+  return [];
+};
+
+const parseActivities = (rawActivities, activityFilesMap = {}) => {
+  if (!rawActivities) {
+    // If no text activities provided, check if any activity files were sent
+    const fileIndexes = Object.keys(activityFilesMap).map(Number);
+    if (!fileIndexes.length) return [];
+    return fileIndexes.map((idx) => ({
+      title: "",
+      description: "",
+      sortOrder: idx,
+      files: activityFilesMap[idx] || [],
+    }));
+  }
+
+  let parsed = rawActivities;
+  if (typeof rawActivities === "string") {
+    try {
+      parsed = JSON.parse(rawActivities);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(parsed)) {
+    if (typeof parsed === "object" && parsed !== null) parsed = [parsed];
+    else return [];
+  }
+
+  return parsed.map((act, index) => {
+    const actIdx =
+      act.activityIndex !== undefined ? Number(act.activityIndex) : index;
+    const files =
+      activityFilesMap[actIdx] ||
+      (act.id && activityFilesMap[act.id]) ||
+      [];
+
+    return {
+      id: act.id ? Number(act.id) : undefined,
+      title: act.title || "",
+      description: act.description || "",
+      sortOrder:
+        act.sortOrder !== undefined &&
+        act.sortOrder !== null &&
+        !isNaN(Number(act.sortOrder))
+          ? Number(act.sortOrder)
+          : index,
+      existingImages: Array.isArray(act.existingImages)
+        ? act.existingImages.map((img, imgIdx) => ({
+            id: Number(img.id || img),
+            sortOrder:
+              img.sortOrder !== undefined && !isNaN(Number(img.sortOrder))
+                ? Number(img.sortOrder)
+                : imgIdx,
+          }))
+        : [],
+      removeImageIds: parseNumberArray(act.removeImageIds),
+      imageOrders: Array.isArray(act.imageOrders)
+        ? act.imageOrders.map(Number)
+        : [],
+      files,
+    };
+  });
+};
+
+const extractFiles = (req) => {
+  let coverFile = null;
+  const galleryFiles = [];
+  const activityFilesMap = {};
+
+  if (Array.isArray(req.files)) {
+    for (const file of req.files) {
+      if (file.fieldname === "coverImage") {
+        coverFile = file;
+      } else if (file.fieldname === "gallery") {
+        galleryFiles.push(file);
+      } else if (file.fieldname.startsWith("activity_")) {
+        const match = file.fieldname.match(/^activity_(\d+)/);
+        if (match) {
+          const idx = parseInt(match[1], 10);
+          if (!activityFilesMap[idx]) activityFilesMap[idx] = [];
+          activityFilesMap[idx].push(file);
+        } else {
+          if (!activityFilesMap[0]) activityFilesMap[0] = [];
+          activityFilesMap[0].push(file);
+        }
+      } else if (file.fieldname === "activityImages") {
+        if (!activityFilesMap[0]) activityFilesMap[0] = [];
+        activityFilesMap[0].push(file);
+      }
+    }
+  } else if (req.files && typeof req.files === "object") {
+    coverFile = req.files.coverImage?.[0] || null;
+    if (Array.isArray(req.files.gallery)) {
+      galleryFiles.push(...req.files.gallery);
+    }
+    for (const key of Object.keys(req.files)) {
+      if (key.startsWith("activity_")) {
+        const match = key.match(/^activity_(\d+)/);
+        if (match) {
+          const idx = parseInt(match[1], 10);
+          if (!activityFilesMap[idx]) activityFilesMap[idx] = [];
+          activityFilesMap[idx].push(...req.files[key]);
+        }
+      }
+    }
+  }
+
+  return { coverFile, galleryFiles, activityFilesMap };
+};
+
 // Admin: Add blog
 export const addBlog = asyncHandler(async (req, res, next) => {
   const payload = buildBlogPayload(req.body);
@@ -26,8 +147,7 @@ export const addBlog = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse("Title and description are required", 400));
   }
 
-  const coverFile = req.files?.coverImage?.[0];
-  const galleryFiles = req.files?.gallery || [];
+  const { coverFile, galleryFiles, activityFilesMap } = extractFiles(req);
 
   const coverImage = coverFile
     ? await blogService.createMediaFromFile(coverFile)
@@ -36,10 +156,13 @@ export const addBlog = asyncHandler(async (req, res, next) => {
     ? await blogService.createMediaFromFiles(galleryFiles)
     : [];
 
+  const activities = parseActivities(req.body.activities, activityFilesMap);
+
   const blog = await blogService.createBlog({
     ...payload,
     coverImageId: coverImage?.id,
     galleryIds: galleryMedia.map((m) => m.id),
+    activities,
   });
   res.status(201).json({ success: true, message: "Blog created", data: blog });
 });
@@ -47,36 +170,15 @@ export const addBlog = asyncHandler(async (req, res, next) => {
 // Admin: Edit blog
 export const editBlog = asyncHandler(async (req, res) => {
   const payload = buildBlogPayload(req.body);
-  const rawRemoveGalleryIds = req.body.removeGalleryIds;
-  let removeGalleryIds = [];
-
-  if (Array.isArray(rawRemoveGalleryIds)) {
-    removeGalleryIds = rawRemoveGalleryIds.map((id) => Number(id));
-  } else if (typeof rawRemoveGalleryIds === "string") {
-    try {
-      const parsed = JSON.parse(rawRemoveGalleryIds);
-      if (Array.isArray(parsed)) {
-        removeGalleryIds = parsed.map((id) => Number(id));
-      } else {
-        removeGalleryIds = rawRemoveGalleryIds
-          .split(",")
-          .map((id) => Number(id.trim()));
-      }
-    } catch {
-      removeGalleryIds = rawRemoveGalleryIds
-        .split(",")
-        .map((id) => Number(id.trim()));
-    }
-  }
-  removeGalleryIds = removeGalleryIds.filter(Boolean);
+  const removeGalleryIds = parseNumberArray(req.body.removeGalleryIds);
+  const removeActivityIds = parseNumberArray(req.body.removeActivityIds);
 
   const removeCoverImage =
     typeof req.body.removeCoverImage === "string"
       ? req.body.removeCoverImage.toLowerCase() === "true"
       : Boolean(req.body.removeCoverImage);
 
-  const coverFile = req.files?.coverImage?.[0];
-  const galleryFiles = req.files?.gallery || [];
+  const { coverFile, galleryFiles, activityFilesMap } = extractFiles(req);
 
   const coverImage = coverFile
     ? await blogService.createMediaFromFile(coverFile)
@@ -85,12 +187,16 @@ export const editBlog = asyncHandler(async (req, res) => {
     ? await blogService.createMediaFromFiles(galleryFiles)
     : [];
 
+  const activities = parseActivities(req.body.activities, activityFilesMap);
+
   const blog = await blogService.updateBlog(Number(req.params.id), {
     ...payload,
     coverImageId: coverImage?.id,
     galleryIds: galleryMedia.map((m) => m.id),
     removeGalleryIds,
     removeCoverImage,
+    activities,
+    removeActivityIds,
   });
   res.status(200).json({ success: true, message: "Blog updated", data: blog });
 });

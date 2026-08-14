@@ -1,0 +1,1390 @@
+{
+	"info": {
+		"_postman_id": "idea-learning-backend-api-v1",
+		"name": "Idea Learning API - Full Collection",
+		"description": "Complete Postman Collection for Idea Learning Backend API including Auth, Users, Courses, Blogs & Inline Activities, Payments, bKash, Events, Messages, Quizzes, and Certificates.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}",
+					"host": ["{{baseUrl}}"]
+				},
+				"description": "Get API status and server time"
+			}
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"01700000000\",\n  \"role\": \"STUDENT\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.collectionVariables.set('token', jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "me"]
+						}
+					}
+				},
+				{
+					"name": "Update Details",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Updated\",\n  \"phone\": \"01800000000\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/updatedetails",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "updatedetails"]
+						}
+					}
+				},
+				{
+					"name": "Update Password",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/updatepassword",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "updatepassword"]
+						}
+					}
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/forgotpassword",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "forgotpassword"]
+						}
+					}
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"password\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/resetpassword/:token",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "resetpassword", ":token"],
+							"variable": [
+								{
+									"key": "token",
+									"value": "reset_token_here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Confirm Email",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/confirmemail?token=confirm_token_here",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "confirmemail"],
+							"query": [
+								{
+									"key": "token",
+									"value": "confirm_token_here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout"]
+						}
+					}
+				},
+				{
+					"name": "Logout Other Devices",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout-others",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout-others"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Get All Sessions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/admin/sessions",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "admin", "sessions"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Get User Sessions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/admin/sessions/:userId",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "admin", "sessions", ":userId"],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Session",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/admin/sessions/:sessionId",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "admin", "sessions", ":sessionId"],
+							"variable": [
+								{
+									"key": "sessionId",
+									"value": "session_uuid_here"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Logout All User Devices",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/admin/sessions/user/:userId",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "admin", "sessions", "user", ":userId"],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Users (Admin)",
+			"item": [
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Jane Admin\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"admin1234\",\n  \"role\": \"ADMIN\",\n  \"phone\": \"01900000000\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["users"]
+						}
+					}
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["users"]
+						}
+					}
+				},
+				{
+					"name": "Get User By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User By Email",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/email/:email",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "email", ":email"],
+							"variable": [
+								{
+									"key": "email",
+									"value": "john@example.com"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Jane SuperAdmin\",\n  \"role\": \"SUPERADMIN\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "2"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Blog & Blog Activities",
+			"item": [
+				{
+					"name": "Public - Get Published Blogs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/blogs",
+							"host": ["{{baseUrl}}"],
+							"path": ["blogs"]
+						}
+					}
+				},
+				{
+					"name": "Public - Get Published Blog By Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/blogs/slug/:slug",
+							"host": ["{{baseUrl}}"],
+							"path": ["blogs", "slug", ":slug"],
+							"variable": [
+								{
+									"key": "slug",
+									"value": "learn-nodejs-fast"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Get All Blogs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/blogs/all",
+							"host": ["{{baseUrl}}"],
+							"path": ["blogs", "all"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Get Blog By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/blogs/id/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["blogs", "id", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Create Blog (with Inline Activities & Images)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Annual Tree Plantation Drive",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Complete report on our annual community tree plantation campaign.",
+									"type": "text"
+								},
+								{
+									"key": "published",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "coverImage",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "gallery",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "activities",
+									"value": "[\n  {\n    \"title\": \"Phase 1: Soil Preparation & Hole Digging\",\n    \"description\": \"Volunteers gathered early in the morning to prepare 500 spots.\",\n    \"sortOrder\": 0,\n    \"activityIndex\": 0\n  },\n  {\n    \"title\": \"Phase 2: Tree Planting & Watering\",\n    \"description\": \"Planted green saplings across the designated park grounds.\",\n    \"sortOrder\": 1,\n    \"activityIndex\": 1\n  }\n]",
+									"type": "text"
+								},
+								{
+									"key": "activity_0_images",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "activity_1_images",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/blogs",
+							"host": ["{{baseUrl}}"],
+							"path": ["blogs"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Edit Blog (with Inline Activities & Images)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Annual Tree Plantation Drive (Updated)",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Updated report with photos and event details.",
+									"type": "text"
+								},
+								{
+									"key": "activities",
+									"value": "[\n  {\n    \"id\": 1,\n    \"title\": \"Phase 1: Soil Preparation & Hole Digging (Updated)\",\n    \"description\": \"Revised description for Phase 1.\",\n    \"sortOrder\": 0,\n    \"existingImages\": [{ \"id\": 1, \"sortOrder\": 0 }],\n    \"activityIndex\": 0\n  },\n  {\n    \"title\": \"Phase 3: Community Celebration\",\n    \"description\": \"Celebration ceremony after planting.\",\n    \"sortOrder\": 2,\n    \"activityIndex\": 1\n  }\n]",
+									"type": "text"
+								},
+								{
+									"key": "activity_0_images",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "activity_1_images",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/blogs/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["blogs", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Publish/Unpublish Blog",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"published\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/blogs/:id/publish",
+							"host": ["{{baseUrl}}"],
+							"path": ["blogs", ":id", "publish"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Remove Gallery Image",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/blogs/:id/gallery/:mediaId",
+							"host": ["{{baseUrl}}"],
+							"path": ["blogs", ":id", "gallery", ":mediaId"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								},
+								{
+									"key": "mediaId",
+									"value": "7"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Blog",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/blogs/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["blogs", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Courses",
+			"item": [
+				{
+					"name": "Get All Courses (Public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/courses",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses"]
+						}
+					}
+				},
+				{
+					"name": "Get Course By ID (Public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/courses/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Student - Get My Courses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/courses/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses", "me"]
+						}
+					}
+				},
+				{
+					"name": "Student - Get My Courses with Progress",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/courses/me/progress",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses", "me", "progress"]
+						}
+					}
+				},
+				{
+					"name": "Student - Get Single Course Enrolled",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/courses/:id/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses", ":id", "me"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Student - Complete Lesson",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/courses/lesson/complete/:lessonId",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses", "lesson", "complete", ":lessonId"],
+							"variable": [
+								{
+									"key": "lessonId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Create Course",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Fullstack Web Development",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Master React, Node, PostgreSQL, and Prisma.",
+									"type": "text"
+								},
+								{
+									"key": "level",
+									"value": "BEGINNER",
+									"type": "text"
+								},
+								{
+									"key": "language",
+									"value": "English",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "99.99",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "PUBLISHED",
+									"type": "text"
+								},
+								{
+									"key": "thumbnail",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/courses",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Edit Course",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Fullstack Web Development Pro",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "149.99",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/courses/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Add Module to Course",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Module 1: Introduction to Node.js\",\n  \"sortOrder\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/courses/:courseId/module",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses", ":courseId", "module"],
+							"variable": [
+								{
+									"key": "courseId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Add Lesson to Module",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Lesson 1: Setting up Express Server",
+									"type": "text"
+								},
+								{
+									"key": "videoUrl",
+									"value": "https://example.com/video1.mp4",
+									"type": "text"
+								},
+								{
+									"key": "duration",
+									"value": "600",
+									"type": "text"
+								},
+								{
+									"key": "sortOrder",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "isPreview",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/courses/module/:moduleId/lesson",
+							"host": ["{{baseUrl}}"],
+							"path": ["courses", "module", ":moduleId", "lesson"],
+							"variable": [
+								{
+									"key": "moduleId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Payments & bKash",
+			"item": [
+				{
+					"name": "Public - bKash Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"txid\": \"TXN123456789\",\n  \"amount\": \"99.99\",\n  \"senderNumber\": \"01711112222\",\n  \"rawMessage\": \"Payment of Tk 99.99 received from 01711112222. TrxID TXN123456789\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bkash/webhook",
+							"host": ["{{baseUrl}}"],
+							"path": ["bkash", "webhook"]
+						}
+					}
+				},
+				{
+					"name": "Student - Request Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"courseId\": 1,\n  \"paymentMethod\": \"bKash\",\n  \"transactionId\": \"TXN123456789\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/request",
+							"host": ["{{baseUrl}}"],
+							"path": ["payments", "request"]
+						}
+					}
+				},
+				{
+					"name": "Student - Get My Payments",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/payments/my",
+							"host": ["{{baseUrl}}"],
+							"path": ["payments", "my"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Get All Payments",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/payments",
+							"host": ["{{baseUrl}}"],
+							"path": ["payments"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Update Payment Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"SUCCESS\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["payments", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Get All bKash Transactions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/bkash",
+							"host": ["{{baseUrl}}"],
+							"path": ["bkash"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Events",
+			"item": [
+				{
+					"name": "Public - Get Active Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/events",
+							"host": ["{{baseUrl}}"],
+							"path": ["events"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Create Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Tech Summit 2026\",\n  \"date\": \"2026-09-15\",\n  \"location\": \"Dhaka Auditorium\",\n  \"attendees\": \"500+\",\n  \"registrationUrl\": \"https://example.com/register\",\n  \"active\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/events",
+							"host": ["{{baseUrl}}"],
+							"path": ["events"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Messages",
+			"item": [
+				{
+					"name": "Public - Send Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Alice Brown\",\n  \"email\": \"alice@example.com\",\n  \"phone\": \"01811112222\",\n  \"subject\": \"Course Inquiry\",\n  \"message\": \"Hello, I would like to know more about the Fullstack Web Development course.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/messages",
+							"host": ["{{baseUrl}}"],
+							"path": ["messages"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Get All Messages",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/messages",
+							"host": ["{{baseUrl}}"],
+							"path": ["messages"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Quizzes",
+			"item": [
+				{
+					"name": "Student - Get Quizzes by Lesson",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/quizzes/lesson/:lessonId",
+							"host": ["{{baseUrl}}"],
+							"path": ["quizzes", "lesson", ":lessonId"],
+							"variable": [
+								{
+									"key": "lessonId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Student - Submit Quiz Response",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userAnswer\": \"Express.js\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/quizzes/:id/submit",
+							"host": ["{{baseUrl}}"],
+							"path": ["quizzes", ":id", "submit"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Add Quiz",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"lessonId\": 1,\n  \"question\": \"Which web framework is built for Node.js?\",\n  \"options\": [\"React\", \"Express.js\", \"Django\", \"Laravel\"],\n  \"correctAnswer\": \"Express.js\",\n  \"videoCheckpoint\": 120,\n  \"point\": 10\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/quizzes",
+							"host": ["{{baseUrl}}"],
+							"path": ["quizzes"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Certificates",
+			"item": [
+				{
+					"name": "Student - Generate Certificate",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/certificates/generate/:courseId",
+							"host": ["{{baseUrl}}"],
+							"path": ["certificates", "generate", ":courseId"],
+							"variable": [
+								{
+									"key": "courseId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}
