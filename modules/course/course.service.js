@@ -1,6 +1,7 @@
 import prisma from "../../config/prisma.js";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { getVideoDuration } from "../../utils/videoUtils.js";
 
 const getBunnyConfig = () => {
@@ -12,9 +13,63 @@ const getBunnyConfig = () => {
     throw new Error("Bunny Stream configuration missing");
   }
 
-  console.log(`Bunny Config: Library ${libraryId}, Key ${accessKey.substring(0, 5)}...${accessKey.slice(-3)}, Host ${hostname}`);
-
   return { libraryId, accessKey, hostname };
+};
+
+/**
+ * Creates a video placeholder on Bunny Stream and generates presigned TUS/Direct upload signatures.
+ * Allows frontend to upload large videos directly to Bunny Stream without proxying through Node.js.
+ */
+export const generateBunnyUploadSignature = async (title = "Lesson Video") => {
+  const { libraryId, accessKey, hostname } = getBunnyConfig();
+
+  // 1. Create video object on Bunny Stream
+  const createRes = await fetch(
+    `https://video.bunnycdn.com/library/${libraryId}/videos`,
+    {
+      method: "POST",
+      headers: {
+        AccessKey: accessKey,
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ title: title || "Lesson Video" }),
+    },
+  );
+
+  if (!createRes.ok) {
+    const errorText = await createRes.text();
+    throw new Error(`Bunny create video failed: ${errorText}`);
+  }
+
+  const created = await createRes.json();
+  const videoId = created?.guid || created?.videoId || created?.id;
+  if (!videoId) {
+    throw new Error("Bunny create video failed: missing video ID");
+  }
+
+  // 2. Expiration timestamp (valid for 4 hours from now)
+  const expirationTime = Math.floor(Date.now() / 1000) + 4 * 3600;
+
+  // 3. Generate SHA256 signature: sha256(LibraryId + ApiKey + AuthorizationExpire + VideoId)
+  const signatureString = `${libraryId}${accessKey}${expirationTime}${videoId}`;
+  const signature = crypto
+    .createHash("sha256")
+    .update(signatureString)
+    .digest("hex");
+
+  const videoUrl = `https://${hostname}/${videoId}/playlist.m3u8`;
+  const directUploadUrl = `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`;
+
+  return {
+    videoId,
+    libraryId: Number(libraryId),
+    expirationTime,
+    signature,
+    videoUrl,
+    directUploadUrl,
+    tusEndpoint: "https://video.bunnycdn.com/tusupload",
+  };
 };
 
 export const uploadLessonVideoToBunny = async ({

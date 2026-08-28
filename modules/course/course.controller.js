@@ -17,6 +17,7 @@ import {
   updateLesson,
   deleteLesson,
   uploadLessonVideoToBunny,
+  generateBunnyUploadSignature,
   createThumbnailMedia,
   getEnrolledUsersByCourseId,
   getCourseById,
@@ -323,6 +324,18 @@ export const removeModule = asyncHandler(async (req, res, next) => {
 });
 
 // LESSON
+export const getBunnyUploadSignatureController = asyncHandler(
+  async (req, res, next) => {
+    const { title } = req.body;
+    const signatureData = await generateBunnyUploadSignature(title);
+    res.status(200).json({
+      success: true,
+      message: "Bunny upload signature generated successfully",
+      data: signatureData,
+    });
+  },
+);
+
 export const addLesson = asyncHandler(async (req, res, next) => {
   const lessonData = { ...req.body };
 
@@ -346,6 +359,28 @@ export const addLesson = asyncHandler(async (req, res, next) => {
     lessonData.videoUrl = upload.videoUrl;
     if (upload.duration) {
       lessonData.duration = upload.duration;
+    }
+  }
+
+  // Parse numeric/boolean fields
+  if (lessonData.duration !== undefined && lessonData.duration !== null && lessonData.duration !== "") {
+    lessonData.duration = Number(lessonData.duration);
+  }
+  if (lessonData.library_id !== undefined && lessonData.library_id !== null && lessonData.library_id !== "") {
+    lessonData.library_id = Number(lessonData.library_id);
+  }
+  if (lessonData.sortOrder !== undefined && lessonData.sortOrder !== null && lessonData.sortOrder !== "") {
+    lessonData.sortOrder = Number(lessonData.sortOrder);
+  }
+  if (lessonData.isPreview !== undefined) {
+    lessonData.isPreview = lessonData.isPreview === true || lessonData.isPreview === "true";
+  }
+
+  // Fallback videoUrl construction if missing
+  if (lessonData.video_id && !lessonData.videoUrl) {
+    const hostname = process.env.BUNNY_STREAM_HOSTNAME;
+    if (hostname) {
+      lessonData.videoUrl = `https://${hostname}/${lessonData.video_id}/playlist.m3u8`;
     }
   }
 
@@ -380,6 +415,27 @@ export const editLesson = asyncHandler(async (req, res, next) => {
     lessonData.videoUrl = upload.videoUrl;
     if (upload.duration) {
       lessonData.duration = upload.duration;
+    }
+  }
+
+  // Parse numeric/boolean fields
+  if (lessonData.duration !== undefined && lessonData.duration !== null && lessonData.duration !== "") {
+    lessonData.duration = Number(lessonData.duration);
+  }
+  if (lessonData.library_id !== undefined && lessonData.library_id !== null && lessonData.library_id !== "") {
+    lessonData.library_id = Number(lessonData.library_id);
+  }
+  if (lessonData.sortOrder !== undefined && lessonData.sortOrder !== null && lessonData.sortOrder !== "") {
+    lessonData.sortOrder = Number(lessonData.sortOrder);
+  }
+  if (lessonData.isPreview !== undefined) {
+    lessonData.isPreview = lessonData.isPreview === true || lessonData.isPreview === "true";
+  }
+
+  if (lessonData.video_id && !lessonData.videoUrl) {
+    const hostname = process.env.BUNNY_STREAM_HOSTNAME;
+    if (hostname) {
+      lessonData.videoUrl = `https://${hostname}/${lessonData.video_id}/playlist.m3u8`;
     }
   }
 

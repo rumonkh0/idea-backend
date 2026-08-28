@@ -21,6 +21,7 @@ import {
   getMySingleCourse,
   getCourseEnrolledUsers,
   getMyCoursesWithProgress,
+  getBunnyUploadSignatureController,
 } from "./course.controller.js";
 
 import { authorize, protect } from "../../middleware/auth.js";
@@ -121,6 +122,7 @@ router.put("/module/:id", editModule);
 router.delete("/module/:id", removeModule);
 
 // Lesson routes
+router.post("/bunny/signature", getBunnyUploadSignatureController);
 router.post(
   "/module/:moduleId/lesson",
   lessonUpload.single("video"),
