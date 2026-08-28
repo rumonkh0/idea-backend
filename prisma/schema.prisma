@@ -333,3 +333,22 @@ enum MediaType {
   VIDEO
   FILE
 }
+
+enum NoticeCategory {
+  Urgent
+  General
+  CourseUpdate @map("Course Update")
+  Event
+}
+
+model Notice {
+  id        String         @id @default(uuid())
+  title     String
+  excerpt   String
+  content   String         @db.Text
+  date      DateTime       @default(now())
+  category  NoticeCategory @default(General)
+  isPinned  Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}

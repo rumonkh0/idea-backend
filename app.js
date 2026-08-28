@@ -29,6 +29,8 @@ import events from "./modules/event/event.route.js";
 import messages from "./modules/message/message.route.js";
 import quizzes from "./modules/quiz/quiz.route.js";
 import certificates from "./modules/certificate/certificate.route.js";
+import notices from "./modules/notice/notice.route.js";
+
 
 
 // Initialize app
@@ -92,6 +94,10 @@ app.use("/api/v1/messages", messages);
 app.use("/api/v1/quizzes", quizzes);
 // Certificate routes
 app.use("/api/v1/certificates", certificates);
+// Notice routes
+app.use("/api/v1/notices", notices);
+app.use("/api/notices", notices);
+
 
 app.get("/api/v1", async (req, res) => {
   const result = await pool.query("SELECT NOW()");
