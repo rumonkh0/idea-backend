@@ -6,3 +6,19 @@ config/config.env
 /generated/prisma
 .env
 tmp/
+
+# Uploaded Media
+public/uploads/
+
+# Passenger & Process files
+passenger.*
+*.log
+*.pid
+*.pid.lock
+
+# Archives & Temporary server files
+*.zip
+*.bak
+diff.txt
+"prod backen/"
+"et --hard HEAD"
