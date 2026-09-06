@@ -458,18 +458,14 @@ export const removeLesson = asyncHandler(async (req, res, next) => {
 
 // LESSON PROGRESS
 export const completeLessonController = asyncHandler(async (req, res, next) => {
-  let userId;
-  let lessonId;
+  const lessonId = Number(req.params.lessonId || req.body?.lessonId);
 
-  if (req.user.role === "ADMIN" || req.user.role === "SUPERADMIN") {
+  let userId = Number(req.user?.id);
+  if ((req.user?.role === "ADMIN" || req.user?.role === "SUPERADMIN") && req.body?.userId) {
     userId = Number(req.body.userId);
-    lessonId = Number(req.body.lessonId);
-  } else {
-    userId = Number(req.user.id);
-    lessonId = Number(req.params.lessonId);
   }
 
-  if (!userId || !lessonId) {
+  if (!userId || !lessonId || isNaN(userId) || isNaN(lessonId)) {
     return res.status(400).json({
       success: false,
       message: "Invalid userId or lessonId",

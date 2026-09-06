@@ -209,6 +209,7 @@ model Media {
   galleryBlogs    Blog[]              @relation("BlogGallery")
   courseThumbnail Course?             @relation("CourseThumbnail")
   activityImages  BlogActivityImage[]
+  newspaperClips  NewspaperClip[]
 
   createdAt DateTime  @default(now())
 }
@@ -351,4 +352,26 @@ model Notice {
   isPinned  Boolean        @default(false)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+}
+
+model TvMediaReport {
+  id          Int      @id @default(autoincrement())
+  channel     String
+  topic       String
+  link        String
+  platform    String   @default("YouTube")
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model NewspaperClip {
+  id          Int      @id @default(autoincrement())
+  title       String
+  date        String
+  imageId     Int?
+  image       Media?   @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

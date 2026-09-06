@@ -196,6 +196,36 @@ export const deleteBunnyVideo = async (videoId, customLibraryId = null) => {
   }
 };
 
+export const updateBunnyVideoTitle = async (videoId, newTitle, customLibraryId = null) => {
+  if (!videoId || !newTitle) return;
+  try {
+    const { libraryId: defaultLibId, accessKey } = getBunnyConfig();
+    const libId = customLibraryId || defaultLibId;
+
+    const res = await fetch(
+      `https://video.bunnycdn.com/library/${libId}/videos/${videoId}`,
+      {
+        method: "POST",
+        headers: {
+          AccessKey: accessKey,
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ title: newTitle }),
+      },
+    );
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Failed to update Bunny video title ${videoId}: ${errorText}`);
+    } else {
+      console.log(`Successfully updated Bunny video title for ${videoId} to "${newTitle}"`);
+    }
+  } catch (error) {
+    console.error(`Error updating Bunny video title ${videoId}:`, error.message);
+  }
+};
+
 // COURSE CRUD
 
 const getMediaType = (mimeType) => {
@@ -511,15 +541,25 @@ export const createLesson = async (moduleId, data) => {
 };
 
 export const updateLesson = async (id, data) => {
-  if (data.video_id) {
-    const existing = await prisma.lesson.findUnique({
-      where: { id },
-      select: { video_id: true, library_id: true },
-    });
-    if (existing?.video_id && existing.video_id !== data.video_id) {
+  const existing = await prisma.lesson.findUnique({
+    where: { id },
+    select: { video_id: true, library_id: true, title: true },
+  });
+
+  if (existing) {
+    // If video_id changed, delete old video from Bunny
+    if (data.video_id && existing.video_id && existing.video_id !== data.video_id) {
       await deleteBunnyVideo(existing.video_id, existing.library_id);
     }
+
+    // If title changed, sync new title to Bunny video
+    const activeVideoId = data.video_id || existing.video_id;
+    const activeLibraryId = data.library_id || existing.library_id;
+    if (data.title && data.title !== existing.title && activeVideoId) {
+      await updateBunnyVideoTitle(activeVideoId, data.title, activeLibraryId);
+    }
   }
+
   return prisma.lesson.update({ where: { id }, data });
 };
 
@@ -796,12 +836,10 @@ export const completeLesson = async (userId, lessonId) => {
 
   // If all lessons are completed, update enrollment status
   if (totalLessonsCount > 0 && totalLessonsCount === completedLessonsCount) {
-    await prisma.enrollment.update({
+    await prisma.enrollment.updateMany({
       where: {
-        userId_courseId: {
-          userId,
-          courseId,
-        },
+        userId,
+        courseId,
       },
       data: {
         status: "COMPLETED",

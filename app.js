@@ -30,8 +30,8 @@ import messages from "./modules/message/message.route.js";
 import quizzes from "./modules/quiz/quiz.route.js";
 import certificates from "./modules/certificate/certificate.route.js";
 import notices from "./modules/notice/notice.route.js";
-
-
+import tvMedia from "./modules/tvMedia/tvMedia.route.js";
+import newspaperClips from "./modules/newspaperClip/newspaperClip.route.js";
 
 // Initialize app
 const app = express();
@@ -97,6 +97,11 @@ app.use("/api/v1/certificates", certificates);
 // Notice routes
 app.use("/api/v1/notices", notices);
 app.use("/api/notices", notices);
+// TV Media routes
+app.use("/api/v1/tv-media", tvMedia);
+// Newspaper Clip routes
+app.use("/api/v1/newspaper-clips", newspaperClips);
+
 
 
 app.get("/api/v1", async (req, res) => {
