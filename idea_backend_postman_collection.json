@@ -2103,6 +2103,389 @@
       ]
     },
     {
+      "name": "TV Media Reports",
+      "item": [
+        {
+          "name": "Add TV Media Report (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"Somoy TV\",\n  \"topic\": \"স্মার্ট বাংলাদেশ বিনির্মাণে প্রযুক্তি শিক্ষার গুরুত্ব ও আইডিয়া প্রজেক্ট\",\n  \"link\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n  \"platform\": \"YouTube\",\n  \"isAvailable\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/tv-media",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "tv-media"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Edit TV Media Report (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic\": \"আপডেট: প্রযুক্তি শিক্ষার গুরুত্ব\",\n  \"isAvailable\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL}}/tv-media/:id",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "tv-media",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete TV Media Report (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/tv-media/:id",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "tv-media",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active TV Media Reports (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/tv-media?page=1&limit=10&search=",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "tv-media"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All TV Media Reports (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/tv-media/all?page=1&limit=10&search=&isAvailable=true",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "tv-media",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "isAvailable",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get TV Media Report By ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/tv-media/:id",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "tv-media",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Newspaper Clips",
+      "item": [
+        {
+          "name": "Add Newspaper Clip (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "দৈনিক প্রথম আলো - আইডিয়া ট্রেনিং প্রোগ্রাম",
+                  "type": "text"
+                },
+                {
+                  "key": "date",
+                  "value": "2026-03-25T10:00:00.000Z",
+                  "type": "text"
+                },
+                {
+                  "key": "isAvailable",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{URL}}/newspaper-clips",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "newspaper-clips"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Edit Newspaper Clip (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "আপডেট করা শিরোনাম",
+                  "type": "text"
+                },
+                {
+                  "key": "isAvailable",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{URL}}/newspaper-clips/:id",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "newspaper-clips",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Newspaper Clip (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/newspaper-clips/:id",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "newspaper-clips",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Newspaper Clips (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/newspaper-clips?page=1&limit=10&search=",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "newspaper-clips"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Newspaper Clips (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/newspaper-clips/all?page=1&limit=10&search=&isAvailable=true",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "newspaper-clips",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "isAvailable",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Newspaper Clip By ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{URL}}/newspaper-clips/:id",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "newspaper-clips",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Get certificate",
       "protocolProfileBehavior": {
         "disableBodyPruning": true
