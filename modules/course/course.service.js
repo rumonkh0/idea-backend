@@ -365,6 +365,9 @@ export const getCourseWithModulesAndLessons = async (id) => {
           lessons: true,
         },
       },
+      materials: {
+        orderBy: { sortOrder: "asc" },
+      },
     },
   });
 };
@@ -729,6 +732,9 @@ export const getUserEnrollment = async (userId, courseId) => {
     include: {
       course: {
         include: {
+          materials: {
+            orderBy: { sortOrder: "asc" },
+          },
           modules: {
             include: {
               lessons: {
@@ -868,3 +874,175 @@ export const getEnrolledUsersByCourseId = async (courseId) => {
     },
   });
 };
+
+// ===================================
+// COURSE MATERIALS
+// ===================================
+
+export const createCourseMaterial = async (courseId, data, file) => {
+  const numericCourseId = Number(courseId);
+  const course = await prisma.course.findUnique({
+    where: { id: numericCourseId },
+  });
+
+  if (!course) {
+    if (file?.path) {
+      await deleteFileIfExists(file.path);
+    }
+    const err = new Error("Course not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const isLink = data.type === "LINK" || (!file && !!data.externalUrl);
+  const type = isLink ? "LINK" : "FILE";
+
+  let fileUrl = null;
+  let fileName = null;
+  let fileSize = null;
+  let mimeType = null;
+  let externalUrl = null;
+
+  if (type === "FILE") {
+    if (!file) {
+      const err = new Error("Please upload a file or provide an external URL with type LINK");
+      err.statusCode = 400;
+      throw err;
+    }
+    fileUrl = `/uploads/materials/${file.filename}`;
+    fileName = file.originalname;
+    fileSize = file.size;
+    mimeType = file.mimetype;
+  } else {
+    if (!data.externalUrl) {
+      const err = new Error("Please provide an externalUrl for LINK type material");
+      err.statusCode = 400;
+      throw err;
+    }
+    externalUrl = data.externalUrl;
+  }
+
+  const isFree = data.isFree === true || data.isFree === "true";
+  const sortOrder = data.sortOrder ? Number(data.sortOrder) : 0;
+  const title = data.title || fileName || "Course Material";
+  const description = data.description || null;
+
+  return prisma.courseMaterial.create({
+    data: {
+      title,
+      description,
+      type,
+      fileUrl,
+      fileName,
+      fileSize,
+      mimeType,
+      externalUrl,
+      sortOrder,
+      isFree,
+      courseId: numericCourseId,
+    },
+  });
+};
+
+export const getCourseMaterialsByCourseId = async (
+  courseId,
+  { isEnrolledOrAdmin = false } = {}
+) => {
+  const numericCourseId = Number(courseId);
+  const where = { courseId: numericCourseId };
+
+  if (!isEnrolledOrAdmin) {
+    where.isFree = true;
+  }
+
+  return prisma.courseMaterial.findMany({
+    where,
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+  });
+};
+
+export const getCourseMaterialById = async (materialId) => {
+  return prisma.courseMaterial.findUnique({
+    where: { id: Number(materialId) },
+  });
+};
+
+export const updateCourseMaterial = async (materialId, data, file) => {
+  const numericMaterialId = Number(materialId);
+  const existing = await prisma.courseMaterial.findUnique({
+    where: { id: numericMaterialId },
+  });
+
+  if (!existing) {
+    if (file?.path) {
+      await deleteFileIfExists(file.path);
+    }
+    const err = new Error("Course material not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const updateData = {};
+
+  if (data.title !== undefined) updateData.title = data.title;
+  if (data.description !== undefined) updateData.description = data.description;
+  if (data.sortOrder !== undefined) updateData.sortOrder = Number(data.sortOrder);
+  if (data.isFree !== undefined) {
+    updateData.isFree = data.isFree === true || data.isFree === "true";
+  }
+
+  // Handle file replacement
+  if (file) {
+    if (existing.fileUrl) {
+      const oldPath = path.join(process.cwd(), "public", existing.fileUrl);
+      await deleteFileIfExists(oldPath);
+    }
+    updateData.type = "FILE";
+    updateData.fileUrl = `/uploads/materials/${file.filename}`;
+    updateData.fileName = file.originalname;
+    updateData.fileSize = file.size;
+    updateData.mimeType = file.mimetype;
+    updateData.externalUrl = null;
+  } else if (data.externalUrl) {
+    if (data.type === "LINK" || existing.type === "LINK") {
+      if (existing.fileUrl) {
+        const oldPath = path.join(process.cwd(), "public", existing.fileUrl);
+        await deleteFileIfExists(oldPath);
+      }
+      updateData.type = "LINK";
+      updateData.externalUrl = data.externalUrl;
+      updateData.fileUrl = null;
+      updateData.fileName = null;
+      updateData.fileSize = null;
+      updateData.mimeType = null;
+    }
+  }
+
+  return prisma.courseMaterial.update({
+    where: { id: numericMaterialId },
+    data: updateData,
+  });
+};
+
+export const deleteCourseMaterial = async (materialId) => {
+  const numericMaterialId = Number(materialId);
+  const existing = await prisma.courseMaterial.findUnique({
+    where: { id: numericMaterialId },
+  });
+
+  if (!existing) {
+    const err = new Error("Course material not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (existing.fileUrl) {
+    const filePath = path.join(process.cwd(), "public", existing.fileUrl);
+    await deleteFileIfExists(filePath);
+  }
+
+  return prisma.courseMaterial.delete({
+    where: { id: numericMaterialId },
+  });
+};
+

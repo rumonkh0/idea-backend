@@ -76,3 +76,50 @@ export const authorize = (...roles) => {
     next();
   };
 };
+
+// Optional authentication: populates req.user if valid token provided, otherwise continues as guest
+export const optionalProtect = asyncHandler(async (req, res, next) => {
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies?.token) {
+    token = req.cookies.token;
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const session = await prisma.session.findUnique({
+      where: { token },
+    });
+
+    if (session) {
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isEmailConfirmed: true,
+        },
+      });
+
+      if (user) {
+        req.user = user;
+        req.token = token;
+      }
+    }
+  } catch (err) {
+    // Soft fail for optional auth
+  }
+
+  next();
+});
+

@@ -22,9 +22,14 @@ import {
   getCourseEnrolledUsers,
   getMyCoursesWithProgress,
   getBunnyUploadSignatureController,
+  addCourseMaterial,
+  getCourseMaterials,
+  getAdminCourseMaterials,
+  editCourseMaterial,
+  removeCourseMaterial,
 } from "./course.controller.js";
 
-import { authorize, protect } from "../../middleware/auth.js";
+import { authorize, protect, optionalProtect } from "../../middleware/auth.js";
 import imageProcess from "../../middleware/imageProcess.js";
 
 const router = express.Router();
@@ -84,6 +89,36 @@ const thumbnailUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
+// ── Course material upload config ──
+const materialUploadDir = path.join(__dirname, "../../public/uploads/materials");
+
+if (!fs.existsSync(materialUploadDir)) {
+  fs.mkdirSync(materialUploadDir, { recursive: true });
+}
+
+const materialStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(materialUploadDir)) {
+      fs.mkdirSync(materialUploadDir, { recursive: true });
+    }
+    cb(null, materialUploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const sanitizedBase = path
+      .basename(file.originalname, ext)
+      .replace(/[^a-zA-Z0-9-_]/g, "_")
+      .slice(0, 50);
+    const name = `${Date.now()}-${sanitizedBase}${ext}`;
+    cb(null, name);
+  },
+});
+
+const materialUpload = multer({
+  storage: materialStorage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
+});
+
 /* ===========================
    STUDENT ROUTES
 =========================== */
@@ -97,11 +132,12 @@ router.get("/:id/me", protect, getMySingleCourse);
 router.post("/lesson/complete/:lessonId", protect, completeLessonController);
 
 /* ===========================
-   PUBLIC ROUTES
+   PUBLIC & STUDENT ACCESS ROUTES
 =========================== */
 
 router.get("/", getCourses);
 router.get("/:id", getCourse);
+router.get("/:id/materials", optionalProtect, getCourseMaterials);
 
 /* ===========================
    ADMIN ROUTES
@@ -130,5 +166,22 @@ router.post(
 );
 router.put("/lesson/:id", lessonUpload.single("video"), editLesson);
 router.delete("/lesson/:id", removeLesson);
+
+// Material routes (Admin)
+router.post(
+  "/:courseId/material",
+  materialUpload.single("file"),
+  addCourseMaterial,
+);
+router.post(
+  "/:courseId/materials",
+  materialUpload.single("file"),
+  addCourseMaterial,
+);
+router.get("/:courseId/materials/admin", getAdminCourseMaterials);
+router.put("/material/:id", materialUpload.single("file"), editCourseMaterial);
+router.put("/materials/:id", materialUpload.single("file"), editCourseMaterial);
+router.delete("/material/:id", removeCourseMaterial);
+router.delete("/materials/:id", removeCourseMaterial);
 
 export default router;

@@ -23,7 +23,13 @@ import {
   getCourseById,
   getUserEnrolledCoursesWithProgress,
   completeLesson,
+  createCourseMaterial,
+  getCourseMaterialsByCourseId,
+  getCourseMaterialById,
+  updateCourseMaterial,
+  deleteCourseMaterial,
 } from "./course.service.js";
+import prisma from "../../config/prisma.js";
 
 
 // COURSE
@@ -480,3 +486,84 @@ export const completeLessonController = asyncHandler(async (req, res, next) => {
     data: progress,
   });
 });
+
+// ===================================
+// COURSE MATERIALS CONTROLLERS
+// ===================================
+
+export const addCourseMaterial = asyncHandler(async (req, res, next) => {
+  const courseId = Number(req.params.courseId);
+  const material = await createCourseMaterial(courseId, req.body, req.file);
+
+  res.status(201).json({
+    success: true,
+    message: "Course material added successfully",
+    data: material,
+  });
+});
+
+export const getCourseMaterials = asyncHandler(async (req, res, next) => {
+  const courseId = Number(req.params.id || req.params.courseId);
+  let isEnrolledOrAdmin = false;
+
+  if (req.user) {
+    if (req.user.role === "ADMIN" || req.user.role === "SUPERADMIN") {
+      isEnrolledOrAdmin = true;
+    } else {
+      const enrollment = await prisma.enrollment.findUnique({
+        where: {
+          userId_courseId: {
+            userId: Number(req.user.id),
+            courseId,
+          },
+        },
+      });
+      if (enrollment && enrollment.status === "ACTIVE") {
+        isEnrolledOrAdmin = true;
+      }
+    }
+  }
+
+  const materials = await getCourseMaterialsByCourseId(courseId, { isEnrolledOrAdmin });
+
+  res.status(200).json({
+    success: true,
+    count: materials.length,
+    isEnrolledOrAdmin,
+    data: materials,
+  });
+});
+
+export const getAdminCourseMaterials = asyncHandler(async (req, res, next) => {
+  const courseId = Number(req.params.courseId || req.params.id);
+  const materials = await getCourseMaterialsByCourseId(courseId, { isEnrolledOrAdmin: true });
+
+  res.status(200).json({
+    success: true,
+    count: materials.length,
+    data: materials,
+  });
+});
+
+export const editCourseMaterial = asyncHandler(async (req, res, next) => {
+  const materialId = Number(req.params.id);
+  const material = await updateCourseMaterial(materialId, req.body, req.file);
+
+  res.status(200).json({
+    success: true,
+    message: "Course material updated successfully",
+    data: material,
+  });
+});
+
+export const removeCourseMaterial = asyncHandler(async (req, res, next) => {
+  const materialId = Number(req.params.id);
+  await deleteCourseMaterial(materialId);
+
+  res.status(200).json({
+    success: true,
+    message: "Course material deleted successfully",
+    data: null,
+  });
+});
+

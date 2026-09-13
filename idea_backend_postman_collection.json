@@ -782,6 +782,221 @@
           ]
         },
         {
+          "name": "Materials",
+          "item": [
+            {
+              "name": "Add Material (File Upload)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "title",
+                      "value": "Course Syllabus 2026",
+                      "type": "text"
+                    },
+                    {
+                      "key": "description",
+                      "value": "Official course syllabus and schedule",
+                      "type": "text"
+                    },
+                    {
+                      "key": "type",
+                      "value": "FILE",
+                      "type": "text"
+                    },
+                    {
+                      "key": "isFree",
+                      "value": "true",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "0",
+                      "type": "text"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{URL}}/courses/:courseId/materials",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "courses",
+                    ":courseId",
+                    "materials"
+                  ],
+                  "variable": [
+                    {
+                      "key": "courseId",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": "Upload a course material file (PDF, ZIP, DOCX, etc.) as Admin"
+              },
+              "response": []
+            },
+            {
+              "name": "Add Material (External Link)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Course GitHub Repository\",\n  \"description\": \"Starter code and slides\",\n  \"type\": \"LINK\",\n  \"externalUrl\": \"https://github.com/example/course-repo\",\n  \"isFree\": true,\n  \"sortOrder\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/courses/:courseId/materials",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "courses",
+                    ":courseId",
+                    "materials"
+                  ],
+                  "variable": [
+                    {
+                      "key": "courseId",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": "Add an external link material (Google Drive, GitHub repo, etc.) as Admin"
+              },
+              "response": []
+            },
+            {
+              "name": "Get Course Materials (Student / Public)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/courses/:courseId/materials",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "courses",
+                    ":courseId",
+                    "materials"
+                  ],
+                  "variable": [
+                    {
+                      "key": "courseId",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": "Get materials for a course. If logged in and enrolled (or admin), returns all materials; if guest, returns only isFree: true preview materials."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Course Materials Admin",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/courses/:courseId/materials/admin",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "courses",
+                    ":courseId",
+                    "materials",
+                    "admin"
+                  ],
+                  "variable": [
+                    {
+                      "key": "courseId",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": "Get all course materials for admin management unconditionally"
+              },
+              "response": []
+            },
+            {
+              "name": "Edit Course Material",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Updated Material Title\",\n  \"description\": \"Updated description\",\n  \"isFree\": true,\n  \"sortOrder\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{URL}}/courses/materials/:id",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "courses",
+                    "materials",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": "Update material details or replace file/URL as Admin"
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Course Material",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{URL}}/courses/materials/:id",
+                  "host": [
+                    "{{URL}}"
+                  ],
+                  "path": [
+                    "courses",
+                    "materials",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": "Delete course material and remove uploaded file from disk as Admin"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "Get All Courses Public",
           "request": {
             "method": "GET",
