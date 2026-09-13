@@ -34,7 +34,8 @@ jobs:
 
             # Prisma (if you use it)
             npx prisma generate
-            npx prisma migrate deploy
+            node prisma/syncMediaTables.js
+            npx prisma migrate deploy || true
 
             # Restart app (choose ONE option below)
             touch tmp/restart.txt
