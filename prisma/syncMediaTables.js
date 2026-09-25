@@ -154,6 +154,25 @@ async function main() {
   `);
   console.log("✓ User.avatar and avatarId columns ready");
 
+  // 9. Sync sequences for tables to prevent duplicate key errors on insert
+  await prisma.$executeRawUnsafe(`
+    DO $$
+    DECLARE
+      r RECORD;
+    BEGIN
+      FOR r IN
+        SELECT c.table_name, c.column_name, pg_get_serial_sequence(quote_ident(c.table_name), c.column_name) AS seq
+        FROM information_schema.columns c
+        WHERE c.table_schema = 'public' AND c.column_default LIKE 'nextval%'
+      LOOP
+        IF r.seq IS NOT NULL THEN
+          EXECUTE format('SELECT setval(%L, COALESCE((SELECT MAX(%I) FROM %I), 1))', r.seq, r.column_name, r.table_name);
+        END IF;
+      END LOOP;
+    END $$;
+  `);
+  console.log("✓ PostgreSQL sequences synchronized");
+
   console.log("\n🎉 All missing tables and columns have been created successfully!");
   process.exit(0);
 }

@@ -174,6 +174,13 @@ async function seed() {
     });
   }
 
+  console.log("Syncing PostgreSQL sequences...");
+  await prisma.$executeRawUnsafe(`
+    SELECT setval(pg_get_serial_sequence('"TvMediaReport"', 'id'), COALESCE((SELECT MAX(id) FROM "TvMediaReport"), 1));
+    SELECT setval(pg_get_serial_sequence('"NewspaperClip"', 'id'), COALESCE((SELECT MAX(id) FROM "NewspaperClip"), 1));
+  `);
+  console.log("✓ Sequences synchronized");
+
   console.log("Seeding completed successfully!");
   process.exit(0);
 }
