@@ -39,7 +39,29 @@ export const addCourse = asyncHandler(async (req, res, next) => {
   // Parse numeric fields from form-data strings
   if (courseData.duration) courseData.duration = Number(courseData.duration);
   if (courseData.instructorId) courseData.instructorId = Number(courseData.instructorId);
+  if (courseData.price !== undefined && courseData.price !== "") {
+    courseData.price = Number(courseData.price);
+  }
+  if (courseData.salePrice !== undefined) {
+    courseData.salePrice =
+      courseData.salePrice !== "" &&
+      courseData.salePrice !== "null" &&
+      courseData.salePrice !== null
+        ? Number(courseData.salePrice)
+        : null;
+  }
 
+  if (
+    courseData.salePrice !== null &&
+    courseData.salePrice !== undefined &&
+    courseData.price !== undefined &&
+    courseData.salePrice > courseData.price
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Sale price cannot be greater than regular price",
+    });
+  }
 
   if (req.file) {
     if (!req.file.mimetype.startsWith("image/")) {
@@ -69,7 +91,31 @@ export const editCourse = asyncHandler(async (req, res, next) => {
   // Parse numeric fields from form-data strings
   if (courseData.duration) courseData.duration = Number(courseData.duration);
   if (courseData.instructorId) courseData.instructorId = Number(courseData.instructorId);
+  if (courseData.price !== undefined && courseData.price !== "") {
+    courseData.price = Number(courseData.price);
+  }
+  if (courseData.salePrice !== undefined) {
+    courseData.salePrice =
+      courseData.salePrice !== "" &&
+      courseData.salePrice !== "null" &&
+      courseData.salePrice !== null
+        ? Number(courseData.salePrice)
+        : null;
+  }
 
+  if (courseData.salePrice !== null && courseData.salePrice !== undefined) {
+    let regularPrice = courseData.price;
+    if (regularPrice === undefined) {
+      const existingCourse = await getCourseById(Number(req.params.id));
+      if (existingCourse) regularPrice = Number(existingCourse.price);
+    }
+    if (regularPrice !== undefined && courseData.salePrice > regularPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Sale price cannot be greater than regular price",
+      });
+    }
+  }
 
   if (req.file) {
     if (!req.file.mimetype.startsWith("image/")) {

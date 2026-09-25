@@ -57,6 +57,7 @@ model Course {
   level         CourseLevel
   language      String
   price         Decimal      @db.Decimal(10, 2)
+  salePrice     Decimal?     @db.Decimal(10, 2)
   rating        Decimal?     @db.Decimal(3, 2)
   status        CourseStatus
   createdAt     DateTime     @default(now())

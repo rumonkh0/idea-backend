@@ -128,9 +128,13 @@ async function main() {
   } catch (err) {
     console.log("Note on CourseMaterial FK:", err.message);
   }
-  console.log("✓ CourseMaterial table ready");
+  // 7. Add salePrice to Course table if not exists
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "Course" ADD COLUMN IF NOT EXISTS "salePrice" DECIMAL(10, 2);
+  `);
+  console.log("✓ Course.salePrice column ready");
 
-  console.log("\n🎉 All missing tables have been created successfully!");
+  console.log("\n🎉 All missing tables and columns have been created successfully!");
   process.exit(0);
 }
 

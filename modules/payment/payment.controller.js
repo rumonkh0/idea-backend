@@ -35,11 +35,16 @@ export const requestPayment = asyncHandler(async (req, res, next) => {
   // Immediately check if a bKash transaction with same txid already exists
   const bkashTx = await findBkashByTxid(transactionId);
 
+  const effectivePrice =
+    course.salePrice !== null && course.salePrice !== undefined
+      ? Number(course.salePrice)
+      : Number(course.price);
+
   if (
     bkashTx &&
     !isNaN(Number(bkashTx.amount)) &&
     !isNaN(Number(amount)) &&
-    Number(bkashTx.amount) >= Number(course.price)
+    Number(bkashTx.amount) >= effectivePrice
   ) {
     const updated = await updatePaymentStatusById(payment.id, "SUCCESS");
     await markBkashMatched(transactionId);
