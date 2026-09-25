@@ -47,6 +47,7 @@ export const protect = asyncHandler(async (req, res, next) => {
         email: true,
         role: true,
         isEmailConfirmed: true,
+        avatar: true,
       },
     });
 
@@ -108,6 +109,7 @@ export const optionalProtect = asyncHandler(async (req, res, next) => {
           email: true,
           role: true,
           isEmailConfirmed: true,
+          avatar: true,
         },
       });
 

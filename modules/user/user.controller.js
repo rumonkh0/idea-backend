@@ -2,7 +2,7 @@ import * as userService from "./user.service.js";
 import asyncHandler from "../../middleware/async.js";
 
 export const createUser = asyncHandler(async (req, res) => {
-  const user = await userService.createUser(req.body);
+  const user = await userService.createUser(req.body, req.file);
   res.status(201).json({
     success: true,
     message: "User created successfully",
@@ -32,7 +32,7 @@ export const getUserById = asyncHandler(async (req, res) => {
 
 export const updateUser = asyncHandler(async (req, res) => {
   const userId = Number(req.params.id);
-  const user = await userService.updateUser(userId, req.body);
+  const user = await userService.updateUser(userId, req.body, req.file);
   res.status(200).json({
     success: true,
     message: "User updated successfully",

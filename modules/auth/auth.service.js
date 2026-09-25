@@ -4,6 +4,10 @@ import jwt from "jsonwebtoken";
 import prisma from "../../config/prisma.js";
 import ErrorResponse from "../../utils/errorResponse.js";
 import asyncHandler from "../../middleware/async.js";
+import {
+  createAvatarMedia,
+  deleteUserAvatarMedia,
+} from "../user/user.service.js";
 
 // Generate JWT
 // const generateJwt = (userId) => {
@@ -19,6 +23,7 @@ const generateJwt = (user) => {
     email: user.email,
     phone: user.phone,
     role: user.role,
+    avatar: user.avatar,
   };
 
   return jwt.sign(payload, process.env.JWT_SECRET, {
@@ -166,15 +171,122 @@ export const updatePasswordService = asyncHandler(
 );
 
 // Update user details
-export const updateDetailsService = asyncHandler(async (userId, data) => {
-  const allowedFields = {
-    name: data.name,
-    email: data.email,
-  };
+export const updateDetailsService = asyncHandler(async (userId, data, file) => {
+  const allowedFields = {};
+  if (data.name !== undefined) allowedFields.name = data.name;
+  if (data.email !== undefined) allowedFields.email = data.email;
+  if (data.phone !== undefined) allowedFields.phone = data.phone;
+
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { avatarMedia: true },
+  });
+
+  if (!existing) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  if (file) {
+    await deleteUserAvatarMedia(existing);
+    const media = await createAvatarMedia(file);
+    allowedFields.avatar = media.url;
+    allowedFields.avatarId = media.id;
+  } else if (data.removeAvatar === "true" || data.removeAvatar === true) {
+    await deleteUserAvatarMedia(existing);
+    allowedFields.avatar = null;
+    allowedFields.avatarId = null;
+  }
+
+  const { avatarId, ...rest } = allowedFields;
 
   return prisma.user.update({
     where: { id: userId },
-    data: allowedFields,
+    data: {
+      ...rest,
+      ...(avatarId !== undefined
+        ? avatarId
+          ? { avatarMedia: { connect: { id: avatarId } } }
+          : { avatarMedia: { disconnect: true } }
+        : {}),
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      avatar: true,
+      avatarMedia: true,
+      isEmailConfirmed: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+});
+
+// Update user avatar directly
+export const updateUserAvatarService = asyncHandler(async (userId, file) => {
+  if (!file) {
+    throw new ErrorResponse("Please upload an image file", 400);
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { avatarMedia: true },
+  });
+
+  if (!existing) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  await deleteUserAvatarMedia(existing);
+  const media = await createAvatarMedia(file);
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      avatar: media.url,
+      avatarMedia: { connect: { id: media.id } },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      avatar: true,
+      avatarMedia: true,
+    },
+  });
+});
+
+// Delete user avatar directly
+export const deleteUserAvatarService = asyncHandler(async (userId) => {
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { avatarMedia: true },
+  });
+
+  if (!existing) {
+    throw new ErrorResponse("User not found", 404);
+  }
+
+  await deleteUserAvatarMedia(existing);
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      avatar: null,
+      avatarMedia: { disconnect: true },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      avatar: true,
+    },
   });
 });
 

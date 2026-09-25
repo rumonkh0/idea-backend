@@ -6,6 +6,8 @@ import {
   resetPassword,
   confirmEmail,
   updateDetails,
+  updateAvatar,
+  deleteAvatar,
   updatePassword,
   logout,
   logoutOthers,
@@ -16,6 +18,8 @@ import {
 } from './auth.controller.js';
 
 import { protect, authorize } from '../../middleware/auth.js';
+import avatarUpload from '../../middleware/avatarUpload.js';
+import imageProcess from '../../middleware/imageProcess.js';
 
 const router = express.Router();
 
@@ -24,7 +28,9 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:token', resetPassword);
-router.put('/updatedetails', protect, updateDetails);
+router.put('/updatedetails', protect, avatarUpload.single('avatar'), imageProcess, updateDetails);
+router.put('/avatar', protect, avatarUpload.single('avatar'), imageProcess, updateAvatar);
+router.delete('/avatar', protect, deleteAvatar);
 router.put('/updatepassword', protect, updatePassword);
 router.get('/confirmemail', confirmEmail);
 

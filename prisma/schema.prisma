@@ -18,6 +18,9 @@ model User {
   name          String
   email         String       @unique
   phone         String?
+  avatar        String?
+  avatarId      Int?         @unique
+  avatarMedia   Media?       @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
   passwordHash  String
   role          UserRole     @default(STUDENT)
   isEmailConfirmed       Boolean  @default(false)
@@ -210,6 +213,7 @@ model Media {
   coveredBlogs    Blog[]              @relation("BlogCover")   
   galleryBlogs    Blog[]              @relation("BlogGallery")
   courseThumbnail Course?             @relation("CourseThumbnail")
+  userAvatar      User?               @relation("UserAvatar")
   activityImages  BlogActivityImage[]
   newspaperClips  NewspaperClip[]
 

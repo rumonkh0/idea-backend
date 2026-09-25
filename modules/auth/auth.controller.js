@@ -8,6 +8,8 @@ import {
   resetPasswordService,
   confirmEmailService,
   updateDetailsService,
+  updateUserAvatarService,
+  deleteUserAvatarService,
   updatePasswordService,
   getUserSessions,
   getAllSessions,
@@ -39,6 +41,8 @@ const sendTokenResponse = (
     name: user.name,
     email: user.email,
     phone: user.phone,
+    role: user.role,
+    avatar: user.avatar,
   };
 
   res
@@ -122,10 +126,36 @@ export const logoutOthers = asyncHandler(async (req, res, next) => {
 
 // @route PUT /api/v1/auth/updatedetails
 export const updateDetails = asyncHandler(async (req, res) => {
-  const user = await updateDetailsService(req.user.id, req.body);
+  const user = await updateDetailsService(req.user.id, req.body, req.file);
   res.status(200).json({
     success: true,
     message: "User details updated successfully",
+    data: user,
+  });
+});
+
+// @route PUT /api/v1/auth/avatar
+export const updateAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      message: "Please upload an image file for avatar",
+    });
+  }
+  const user = await updateUserAvatarService(req.user.id, req.file);
+  res.status(200).json({
+    success: true,
+    message: "Avatar updated successfully",
+    data: user,
+  });
+});
+
+// @route DELETE /api/v1/auth/avatar
+export const deleteAvatar = asyncHandler(async (req, res) => {
+  const user = await deleteUserAvatarService(req.user.id);
+  res.status(200).json({
+    success: true,
+    message: "Avatar removed successfully",
     data: user,
   });
 });
