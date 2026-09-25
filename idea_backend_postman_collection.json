@@ -1182,6 +1182,11 @@
                   "type": "text"
                 },
                 {
+                  "key": "salePrice",
+                  "value": "1800",
+                  "type": "text"
+                },
+                {
                   "key": "status",
                   "value": "PUBLISHED",
                   "type": "text"
@@ -1211,6 +1216,16 @@
                 {
                   "key": "thumbnail",
                   "type": "file"
+                },
+                {
+                  "key": "price",
+                  "value": "2200",
+                  "type": "text"
+                },
+                {
+                  "key": "salePrice",
+                  "value": "1800",
+                  "type": "text"
                 }
               ]
             },
